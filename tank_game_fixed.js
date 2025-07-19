@@ -437,7 +437,7 @@ class Tank {
     addExplosiveAmmo(duration = 15) {
         this.primaryBulletEffect = 'explosive';
         this.bulletEffectTime = duration;
-        console.log('Explosive ammo activated, replacing previous primary bullet effect');
+        if (window.debugManager) window.debugManager.log('Explosive ammo activated, replacing previous primary bullet effect', 'powerup');
     }
     
     addInvincibility(duration = 5) {
@@ -449,31 +449,31 @@ class Tank {
     addShotgunAmmo(duration = 20) {
         this.shotgunEffect = 'shotgun';
         this.shotgunEffectTime = duration;
-        console.log('Shotgun ammo activated, can stack with other effects');
+        if (window.debugManager) window.debugManager.log('Shotgun ammo activated, can stack with other effects', 'powerup');
     }
     
     addChainBullet() {
         this.primaryBulletEffect = 'chain';
         this.bulletEffectTime = 0; // 永久效果
-        console.log('Chain Bullet activated permanently, replacing previous primary bullet effect');
+        if (window.debugManager) window.debugManager.log('Chain Bullet activated permanently, replacing previous primary bullet effect', 'powerup');
     }
     
     addMegaShotgun() {
         this.shotgunEffect = 'mega_shotgun';
         this.shotgunEffectTime = 0; // 永久效果
-        console.log('Mega Shotgun activated permanently, can stack with other effects');
+        if (window.debugManager) window.debugManager.log('Mega Shotgun activated permanently, can stack with other effects', 'powerup');
     }
     
     addThunderBullet() {
         this.primaryBulletEffect = 'thunder';
         this.bulletEffectTime = 0; // 永久效果
-        console.log('Thunder Bullet activated permanently, replacing previous primary bullet effect');
+        if (window.debugManager) window.debugManager.log('Thunder Bullet activated permanently, replacing previous primary bullet effect', 'powerup');
     }
     
     addBulletSpeedBoost(duration = 20) {
         this.bulletSpeedBoost = true;
         this.bulletSpeedBoostTime = duration;
-        console.log('Bullet Speed Boost activated for', duration, 'seconds');
+        if (window.debugManager) window.debugManager.log(`Bullet Speed Boost activated for ${duration} seconds`, 'powerup');
     }
     
     // 重置所有道具效果 - 用于关卡切换
@@ -505,7 +505,7 @@ class Tank {
         
         // 检查冷却时间 - 修复逻辑错误
         if (!this.hasOwnProperty('lastMissileLaunch') || this.lastMissileLaunch < this.missileCooldown) {
-            console.log(`🚀 Player ${this.playerIndex} missile on cooldown: ${this.lastMissileLaunch.toFixed(2)}s / ${this.missileCooldown}s`);
+            if (window.debugManager) window.debugManager.log(`🚀 Player ${this.playerIndex} missile on cooldown: ${this.lastMissileLaunch.toFixed(2)}s / ${this.missileCooldown}s`, 'missile');
             return [];
         }
         
@@ -3082,13 +3082,13 @@ class Game {
             // 🖱️ 鼠标右键检测 (Player 1)
             if (this.keys['MouseRight']) {
                 player1ShouldLaunchMissiles = true;
-                console.log('🖱️ Player 1 right mouse click detected for missile launch');
+                if (window.debugManager) window.debugManager.log('🖱️ Player 1 right mouse click detected for missile launch', 'input');
             }
             
             // ⌨️ 键盘检测 (Player 1 - 可选择Q键作为备用)
             if (this.keys['KeyQ']) {
                 player1ShouldLaunchMissiles = true;
-                console.log('⌨️ Player 1 Q key detected for missile launch');
+                if (window.debugManager) window.debugManager.log('⌨️ Player 1 Q key detected for missile launch', 'input');
             }
             
             // 🎮 手柄B键直接检测
@@ -3096,7 +3096,7 @@ class Game {
                 const gamepad = navigator.getGamepads()[0];
                 if (gamepad && gamepad.buttons[1] && gamepad.buttons[1].pressed) {
                     player1ShouldLaunchMissiles = true;
-                    console.log('🚀 Player 1 B键直接触发导弹');
+                    if (window.debugManager) window.debugManager.log('🚀 Player 1 B键直接触发导弹', 'input');
                 }
             }
             
@@ -3124,7 +3124,7 @@ class Game {
             // ⌨️ 键盘检测 (Player 2 - E键)
             if (this.keys['KeyE']) {
                 player2ShouldLaunchMissiles = true;
-                console.log('⌨️ Player 2 E key detected for missile launch');
+                if (window.debugManager) window.debugManager.log('⌨️ Player 2 E key detected for missile launch', 'input');
             }
             
             // 🔢 小键盘检测 (Player 2 - 小键盘加号)
@@ -3138,7 +3138,7 @@ class Game {
                 const gamepad = navigator.getGamepads()[1];
                 if (gamepad && gamepad.buttons[1] && gamepad.buttons[1].pressed) {
                     player2ShouldLaunchMissiles = true;
-                    console.log('🚀 Player 2 B键直接触发导弹');
+                    if (window.debugManager) window.debugManager.log('🚀 Player 2 B键直接触发导弹', 'input');
                 }
             }
             
@@ -3322,7 +3322,7 @@ class Game {
                 
                 // 标记删除而不是立即删除
                 bullet.markedForDeletion = true;
-                console.log('Bullet blocked by Eagle Shield!');
+                if (window.debugManager) window.debugManager.log('Bullet blocked by Eagle Shield!', 'collision');
                 return;
             }
             
@@ -3424,7 +3424,7 @@ class Game {
             this.bullets.push(chainBullet);
         }
         
-        console.log('Chain bullets created at', x, y);
+        if (window.debugManager) window.debugManager.log(`Chain bullets created at ${x}, ${y}`, 'bullet');
     }
     
     createThunderChain(x, y, owner, hitTank) {
@@ -3488,11 +3488,11 @@ class Game {
                 }
                 
                 chainCount++;
-                console.log(`Thunder chain hit tank at (${Math.round(tank.x)}, ${Math.round(tank.y)})`);
+                if (window.debugManager) window.debugManager.log(`Thunder chain hit tank at (${Math.round(tank.x)}, ${Math.round(tank.y)})`, 'collision');
             }
         }
         
-        console.log(`Thunder chain created at (${x}, ${y}), affected ${chainCount} targets`);
+        if (window.debugManager) window.debugManager.log(`Thunder chain created at (${x}, ${y}), affected ${chainCount} targets`, 'collision');
     }
     
     createExplosion(x, y, owner, radius) {
@@ -3540,7 +3540,7 @@ class Game {
             const damaged = tank.takeDamage(damage);
             
             if (damaged) {
-                console.log(`Explosion hit tank at distance ${Math.round(distance)}, damage: ${damage}`);
+                if (window.debugManager) window.debugManager.log(`Explosion hit tank at distance ${Math.round(distance)}, damage: ${damage}`, 'collision');
                 
                 // 如果击杀了敌人，增加分数
                 if (!tank.alive && !tank.isPlayer && enemiesKilled < maxKills) {
@@ -3566,12 +3566,12 @@ class Game {
         // 创建爆炸视觉效果
         this.createExplosionEffect(x, y, radius);
         
-        console.log(`Explosion at (${x}, ${y}) affected ${affectedTanks.length} targets, killed ${enemiesKilled} enemies`);
+        if (window.debugManager) window.debugManager.log(`Explosion at (${x}, ${y}) affected ${affectedTanks.length} targets, killed ${enemiesKilled} enemies`, 'collision');
     }
     
     createExplosionEffect(x, y, radius) {
         // 创建爆炸视觉效果（这里可以添加粒子效果或临时绘制）
-        console.log(`Explosion effect at (${Math.round(x)}, ${Math.round(y)}) with radius ${radius}`);
+        if (window.debugManager) window.debugManager.log(`Explosion effect at (${Math.round(x)}, ${Math.round(y)}) with radius ${radius}`, 'collision');
         
         // TODO: 可以在这里添加爆炸动画或粒子效果
         // 暂时通过控制台输出，实际游戏中可以添加爆炸动画
@@ -3614,7 +3614,7 @@ class Game {
         bullet.x += bullet.vx * 0.1;
         bullet.y += bullet.vy * 0.1;
         
-        console.log(`Thunder bullet bounced ${bullet.bounceCount}/${bullet.maxBounces} times`);
+        if (window.debugManager) window.debugManager.log(`Thunder bullet bounced ${bullet.bounceCount}/${bullet.maxBounces} times`, 'bullet');
     }
     
     handleThunderBounceFromEagle(bullet) {
@@ -3631,7 +3631,7 @@ class Game {
         bullet.x += bullet.vx * 0.2;
         bullet.y += bullet.vy * 0.2;
         
-        console.log(`Thunder bullet bounced from Eagle Shield ${bullet.bounceCount}/${bullet.maxBounces} times`);
+        if (window.debugManager) window.debugManager.log(`Thunder bullet bounced from Eagle Shield ${bullet.bounceCount}/${bullet.maxBounces} times`, 'bullet');
     }
     
     checkGameOver() {
