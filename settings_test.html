@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Test - Tank Battle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .test-section h2 {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .status.pass {
+            background: #00AA00;
+            color: white;
+        }
+        
+        .status.fail {
+            background: #AA0000;
+            color: white;
+        }
+        
+        .status.warn {
+            background: #AA5500;
+            color: white;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #00AA00, #00FF00);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        .log {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Settings System Test</h1>
+        
+        <div class="test-section">
+            <h2>📋 System Status</h2>
+            <div id="systemStatus"></div>
+            <button onclick="runSystemTests()">🔍 Run System Tests</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎵 Audio Settings Test</h2>
+            <div id="audioStatus"></div>
+            <button onclick="testAudioSettings()">🎵 Test Audio Settings</button>
+            <button onclick="toggleTestMusic()">🎶 Toggle Music</button>
+            <button onclick="toggleTestSound()">🔊 Toggle Sound</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎮 Control Settings Test</h2>
+            <div id="controlStatus"></div>
+            <button onclick="testControlSettings()">🎮 Test Control Settings</button>
+            <button onclick="toggleKeyboard()">⌨️ Toggle Keyboard</button>
+            <button onclick="toggleGamepad()">🎮 Toggle Gamepad</button>
+            <button onclick="toggleVibration()">📳 Toggle Vibration</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Settings Data</h2>
+            <div id="settingsData"></div>
+            <button onclick="showCurrentSettings()">📋 Show Current Settings</button>
+            <button onclick="resetTestSettings()">🔄 Reset Settings</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 Test Log</h2>
+            <div id="testLog" class="log"></div>
+            <button onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+    </div>
+    
+    <!-- 引入必要的脚本 -->
+    <script src="audio_manager.js"></script>
+    <script src="gamepad_manager.js"></script>
+    <script src="game_settings_manager.js"></script>
+    
+    <script>
+        let audioManager;
+        let gamepadManager;
+        let gameSettingsManager;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Initializing settings test...');
+            
+            try {
+                // 初始化音频管理器
+                audioManager = new AudioManager();
+                window.audioManager = audioManager;
+                log('✅ AudioManager initialized');
+            } catch (error) {
+                log('❌ AudioManager failed: ' + error.message);
+            }
+            
+            try {
+                // 初始化游戏手柄管理器
+                gamepadManager = new GamepadManager();
+                window.gamepadManager = gamepadManager;
+                log('✅ GamepadManager initialized');
+            } catch (error) {
+                log('❌ GamepadManager failed: ' + error.message);
+            }
+            
+            try {
+                // 初始化设置管理器
+                gameSettingsManager = new GameSettingsManager();
+                window.gameSettingsManager = gameSettingsManager;
+                gameSettingsManager.init();
+                log('✅ GameSettingsManager initialized');
+            } catch (error) {
+                log('❌ GameSettingsManager failed: ' + error.message);
+            }
+            
+            // 运行初始测试
+            setTimeout(() => {
+                runSystemTests();
+                showCurrentSettings();
+            }, 1000);
+        });
+        
+        function log(message) {
+            const logElement = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        function runSystemTests() {
+            log('🔍 Running system tests...');
+            
+            const systemStatus = document.getElementById('systemStatus');
+            let html = '';
+            
+            // 检查AudioManager
+            if (window.audioManager) {
+                html += '<div class="test-item">AudioManager <span class="status pass">LOADED</span></div>';
+                html += `<div class="test-item">Music Enabled: ${window.audioManager.musicEnabled} <span class="status ${window.audioManager.musicEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+                html += `<div class="test-item">Sound Enabled: ${window.audioManager.soundEnabled} <span class="status ${window.audioManager.soundEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            } else {
+                html += '<div class="test-item">AudioManager <span class="status fail">MISSING</span></div>';
+            }
+            
+            // 检查GamepadManager
+            if (window.gamepadManager) {
+                html += '<div class="test-item">GamepadManager <span class="status pass">LOADED</span></div>';
+                const connectedCount = window.gamepadManager.getConnectedGamepads().length;
+                html += `<div class="test-item">Connected Gamepads: ${connectedCount} <span class="status ${connectedCount > 0 ? 'pass' : 'warn'}">OK</span></div>`;
+            } else {
+                html += '<div class="test-item">GamepadManager <span class="status fail">MISSING</span></div>';
+            }
+            
+            // 检查GameSettingsManager
+            if (window.gameSettingsManager) {
+                html += '<div class="test-item">GameSettingsManager <span class="status pass">LOADED</span></div>';
+                html += `<div class="test-item">Initialized: ${window.gameSettingsManager.isInitialized} <span class="status ${window.gameSettingsManager.isInitialized ? 'pass' : 'fail'}">OK</span></div>`;
+            } else {
+                html += '<div class="test-item">GameSettingsManager <span class="status fail">MISSING</span></div>';
+            }
+            
+            // 检查全局设置
+            if (window.gameSettings) {
+                html += '<div class="test-item">Global gameSettings <span class="status pass">AVAILABLE</span></div>';
+                html += `<div class="test-item">Keyboard Enabled: ${window.gameSettings.keyboardEnabled} <span class="status pass">OK</span></div>`;
+                html += `<div class="test-item">Gamepad Enabled: ${window.gameSettings.gamepadEnabled} <span class="status pass">OK</span></div>`;
+                html += `<div class="test-item">Vibration Enabled: ${window.gameSettings.gamepadVibrationEnabled} <span class="status pass">OK</span></div>`;
+            } else {
+                html += '<div class="test-item">Global gameSettings <span class="status fail">MISSING</span></div>';
+            }
+            
+            systemStatus.innerHTML = html;
+            log('✅ System tests completed');
+        }
+        
+        function testAudioSettings() {
+            log('🎵 Testing audio settings...');
+            
+            if (!window.gameSettingsManager) {
+                log('❌ GameSettingsManager not available');
+                return;
+            }
+            
+            const audioStatus = document.getElementById('audioStatus');
+            let html = '';
+            
+            const settings = window.gameSettingsManager.getAllSettings();
+            
+            html += `<div class="test-item">Music Setting: ${settings.audio.musicEnabled} <span class="status ${settings.audio.musicEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            html += `<div class="test-item">Sound Setting: ${settings.audio.soundEnabled} <span class="status ${settings.audio.soundEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            html += `<div class="test-item">Music Volume: ${settings.audio.musicVolume}% <span class="status pass">OK</span></div>`;
+            html += `<div class="test-item">Sound Volume: ${settings.audio.soundVolume}% <span class="status pass">OK</span></div>`;
+            
+            if (window.audioManager) {
+                html += `<div class="test-item">AudioManager Music: ${window.audioManager.musicEnabled} <span class="status ${window.audioManager.musicEnabled === settings.audio.musicEnabled ? 'pass' : 'fail'}">SYNC</span></div>`;
+                html += `<div class="test-item">AudioManager Sound: ${window.audioManager.soundEnabled} <span class="status ${window.audioManager.soundEnabled === settings.audio.soundEnabled ? 'pass' : 'fail'}">SYNC</span></div>`;
+            }
+            
+            audioStatus.innerHTML = html;
+            log('✅ Audio settings test completed');
+        }
+        
+        function testControlSettings() {
+            log('🎮 Testing control settings...');
+            
+            if (!window.gameSettingsManager) {
+                log('❌ GameSettingsManager not available');
+                return;
+            }
+            
+            const controlStatus = document.getElementById('controlStatus');
+            let html = '';
+            
+            const settings = window.gameSettingsManager.getAllSettings();
+            
+            html += `<div class="test-item">Keyboard Setting: ${settings.controls.keyboardEnabled} <span class="status ${settings.controls.keyboardEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            html += `<div class="test-item">Gamepad Setting: ${settings.controls.gamepadEnabled} <span class="status ${settings.controls.gamepadEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            html += `<div class="test-item">Vibration Setting: ${settings.controls.gamepadVibrationEnabled} <span class="status ${settings.controls.gamepadVibrationEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            html += `<div class="test-item">Numpad Setting: ${settings.controls.numpadEnabled} <span class="status ${settings.controls.numpadEnabled ? 'pass' : 'warn'}">OK</span></div>`;
+            
+            if (window.gameSettings) {
+                html += `<div class="test-item">Global Keyboard: ${window.gameSettings.keyboardEnabled} <span class="status ${window.gameSettings.keyboardEnabled === settings.controls.keyboardEnabled ? 'pass' : 'fail'}">SYNC</span></div>`;
+                html += `<div class="test-item">Global Gamepad: ${window.gameSettings.gamepadEnabled} <span class="status ${window.gameSettings.gamepadEnabled === settings.controls.gamepadEnabled ? 'pass' : 'fail'}">SYNC</span></div>`;
+                html += `<div class="test-item">Global Vibration: ${window.gameSettings.gamepadVibrationEnabled} <span class="status ${window.gameSettings.gamepadVibrationEnabled === settings.controls.gamepadVibrationEnabled ? 'pass' : 'fail'}">SYNC</span></div>`;
+            }
+            
+            controlStatus.innerHTML = html;
+            log('✅ Control settings test completed');
+        }
+        
+        function showCurrentSettings() {
+            if (!window.gameSettingsManager) {
+                log('❌ GameSettingsManager not available');
+                return;
+            }
+            
+            const settings = window.gameSettingsManager.getAllSettings();
+            const settingsData = document.getElementById('settingsData');
+            
+            settingsData.innerHTML = `<pre>${JSON.stringify(settings, null, 2)}</pre>`;
+            log('📋 Current settings displayed');
+        }
+        
+        function toggleTestMusic() {
+            if (window.gameSettingsManager) {
+                const currentSetting = window.gameSettingsManager.getSetting('audio', 'musicEnabled');
+                window.gameSettingsManager.setSetting('audio', 'musicEnabled', !currentSetting);
+                log(`🎶 Music toggled to: ${!currentSetting}`);
+                testAudioSettings();
+            }
+        }
+        
+        function toggleTestSound() {
+            if (window.gameSettingsManager) {
+                const currentSetting = window.gameSettingsManager.getSetting('audio', 'soundEnabled');
+                window.gameSettingsManager.setSetting('audio', 'soundEnabled', !currentSetting);
+                log(`🔊 Sound toggled to: ${!currentSetting}`);
+                testAudioSettings();
+            }
+        }
+        
+        function toggleKeyboard() {
+            if (window.gameSettingsManager) {
+                const currentSetting = window.gameSettingsManager.getSetting('controls', 'keyboardEnabled');
+                window.gameSettingsManager.setSetting('controls', 'keyboardEnabled', !currentSetting);
+                log(`⌨️ Keyboard toggled to: ${!currentSetting}`);
+                testControlSettings();
+            }
+        }
+        
+        function toggleGamepad() {
+            if (window.gameSettingsManager) {
+                const currentSetting = window.gameSettingsManager.getSetting('controls', 'gamepadEnabled');
+                window.gameSettingsManager.setSetting('controls', 'gamepadEnabled', !currentSetting);
+                log(`🎮 Gamepad toggled to: ${!currentSetting}`);
+                testControlSettings();
+            }
+        }
+        
+        function toggleVibration() {
+            if (window.gameSettingsManager) {
+                const currentSetting = window.gameSettingsManager.getSetting('controls', 'gamepadVibrationEnabled');
+                window.gameSettingsManager.setSetting('controls', 'gamepadVibrationEnabled', !currentSetting);
+                log(`📳 Vibration toggled to: ${!currentSetting}`);
+                testControlSettings();
+                
+                // 测试震动
+                if (!currentSetting && window.gamepadManager) {
+                    for (let i = 0; i < 2; i++) {
+                        if (window.gamepadManager.isGamepadConnected(i)) {
+                            window.gamepadManager.vibrate(i, 200, 0.5, 0.3);
+                            log(`📳 Test vibration sent to gamepad ${i}`);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function resetTestSettings() {
+            if (window.gameSettingsManager) {
+                window.gameSettingsManager.resetToDefault();
+                log('🔄 Settings reset to default');
+                setTimeout(() => {
+                    runSystemTests();
+                    testAudioSettings();
+                    testControlSettings();
+                    showCurrentSettings();
+                }, 500);
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

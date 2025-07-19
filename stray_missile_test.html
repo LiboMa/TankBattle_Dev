@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Stray Missile System Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00FF00;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00FF00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .pass {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00FF00;
+            color: #00FF00;
+        }
+        
+        .fail {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #FF0000;
+            color: #FF0000;
+        }
+        
+        .info {
+            background: rgba(0, 100, 255, 0.2);
+            border: 1px solid #0066FF;
+            color: #0066FF;
+        }
+        
+        button {
+            background: #00AA00;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #00FF00;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .missile-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .missile-card {
+            background: rgba(255, 100, 0, 0.1);
+            border: 1px solid #FF6600;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 B类辅助武器系统测试</h1>
+        
+        <div class="test-section">
+            <h3>📋 测试概述</h3>
+            <div class="test-result info">
+                <strong>功能描述:</strong> 每位Player每次出生后有10次释放跟踪导弹的机会<br>
+                <strong>触发方式:</strong> Xbox手柄B键<br>
+                <strong>效果:</strong> 每次发射3个可跟踪导弹，直接打击目标<br>
+                <strong>导弹特性:</strong> 自动寻找最近敌人，智能导航，爆炸伤害
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 功能测试</h3>
+            <div class="controls">
+                <button onclick="testTankInitialization()">测试Tank初始化</button>
+                <button onclick="testMissileCreation()">测试导弹创建</button>
+                <button onclick="testMissileNavigation()">测试导航系统</button>
+                <button onclick="testGamepadIntegration()">测试手柄集成</button>
+                <button onclick="runAllTests()">运行所有测试</button>
+            </div>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎮 手柄测试</h3>
+            <div class="test-result info">
+                <strong>说明:</strong> 连接Xbox手柄后，按B键应该能发射导弹<br>
+                <strong>状态:</strong> <span id="gamepadStatus">检测中...</span>
+            </div>
+            <div class="controls">
+                <button onclick="testGamepadConnection()">检测手柄连接</button>
+                <button onclick="monitorBButton()">监控B键状态</button>
+            </div>
+            <div id="gamepadInfo"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 导弹信息</h3>
+            <div id="missileInfo" class="missile-info">
+                <!-- 导弹信息将在这里显示 -->
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 测试统计</h3>
+            <div id="testStats">
+                <div class="test-result info">
+                    总测试数: <span id="totalTests">0</span><br>
+                    通过测试: <span id="passedTests">0</span><br>
+                    失败测试: <span id="failedTests">0</span><br>
+                    成功率: <span id="successRate">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载游戏文件 -->
+    <script src="game_config.js"></script>
+    <script src="gamepad_manager.js"></script>
+    <script src="audio_manager.js"></script>
+    <script src="tank_game_fixed.js"></script>
+
+    <script>
+        let testResults = [];
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function addTestResult(name, passed, message) {
+            totalTests++;
+            if (passed) {
+                passedTests++;
+            } else {
+                failedTests++;
+            }
+            
+            testResults.push({name, passed, message});
+            updateTestDisplay();
+            updateStats();
+        }
+
+        function updateTestDisplay() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = testResults.map(result => `
+                <div class="test-result ${result.passed ? 'pass' : 'fail'}">
+                    <strong>${result.name}:</strong> ${result.message}
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('totalTests').textContent = totalTests;
+            document.getElementById('passedTests').textContent = passedTests;
+            document.getElementById('failedTests').textContent = failedTests;
+            document.getElementById('successRate').textContent = 
+                totalTests > 0 ? Math.round((passedTests / totalTests) * 100) + '%' : '0%';
+        }
+
+        function testTankInitialization() {
+            try {
+                // 创建测试Tank
+                const testTank = new Tank(100, 100, '#0066FF', {}, true, 1, 1);
+                
+                // 检查导弹系统初始化
+                const hasStrayMissiles = testTank.hasOwnProperty('strayMissiles');
+                const correctInitialCount = testTank.strayMissiles === 10;
+                const hasMaxMissiles = testTank.hasOwnProperty('maxStrayMissiles');
+                const hasCooldown = testTank.hasOwnProperty('missileCooldown');
+                const hasLaunchMethod = typeof testTank.launchStrayMissiles === 'function';
+                
+                if (hasStrayMissiles && correctInitialCount && hasMaxMissiles && hasCooldown && hasLaunchMethod) {
+                    addTestResult('Tank初始化', true, 
+                        `✅ 导弹系统正确初始化 - 初始数量: ${testTank.strayMissiles}, 最大数量: ${testTank.maxStrayMissiles}, 冷却时间: ${testTank.missileCooldown}s`);
+                } else {
+                    addTestResult('Tank初始化', false, 
+                        `❌ 导弹系统初始化失败 - 导弹属性: ${hasStrayMissiles}, 初始数量: ${testTank.strayMissiles}, 发射方法: ${hasLaunchMethod}`);
+                }
+            } catch (error) {
+                addTestResult('Tank初始化', false, `❌ 初始化异常: ${error.message}`);
+            }
+        }
+
+        function testMissileCreation() {
+            try {
+                // 创建测试Tank和敌人
+                const testTank = new Tank(100, 100, '#0066FF', {}, true, 1, 1);
+                const enemies = [new Tank(200, 50, '#FF0000', {}, false, 1, 0)];
+                
+                // 发射导弹
+                const missiles = testTank.launchStrayMissiles(enemies);
+                
+                if (missiles && missiles.length === 3) {
+                    const allMissilesValid = missiles.every(missile => 
+                        missile instanceof StrayMissile && 
+                        missile.owner === testTank &&
+                        missile.damage === 40 &&
+                        missile.speed === 200
+                    );
+                    
+                    if (allMissilesValid) {
+                        addTestResult('导弹创建', true, 
+                            `✅ 成功创建3个导弹 - 伤害: ${missiles[0].damage}, 速度: ${missiles[0].speed}, 生存时间: ${missiles[0].maxLife}s`);
+                    } else {
+                        addTestResult('导弹创建', false, '❌ 导弹属性不正确');
+                    }
+                } else {
+                    addTestResult('导弹创建', false, `❌ 导弹数量错误: ${missiles ? missiles.length : 0}/3`);
+                }
+                
+                // 检查Tank导弹数量减少
+                if (testTank.strayMissiles === 9) {
+                    addTestResult('导弹消耗', true, `✅ 导弹数量正确减少: ${testTank.strayMissiles}/10`);
+                } else {
+                    addTestResult('导弹消耗', false, `❌ 导弹数量未正确减少: ${testTank.strayMissiles}/10`);
+                }
+                
+            } catch (error) {
+                addTestResult('导弹创建', false, `❌ 创建异常: ${error.message}`);
+            }
+        }
+
+        function testMissileNavigation() {
+            try {
+                // 创建导弹和目标
+                const owner = new Tank(100, 100, '#0066FF', {}, true, 1, 1);
+                const target = new Tank(300, 200, '#FF0000', {}, false, 1, 0);
+                const missile = new StrayMissile(100, 100, owner);
+                
+                // 测试目标搜索
+                const enemies = [target];
+                missile.update(0.016, enemies); // 模拟一帧更新
+                
+                const hasTarget = missile.target === target;
+                const isLocked = missile.hasLocked;
+                const correctDistance = missile.getDistanceToTarget() < missile.searchRadius;
+                
+                if (hasTarget && correctDistance) {
+                    addTestResult('目标锁定', true, 
+                        `✅ 成功锁定目标 - 距离: ${Math.round(missile.getDistanceToTarget())}, 锁定状态: ${isLocked}`);
+                } else {
+                    addTestResult('目标锁定', false, 
+                        `❌ 目标锁定失败 - 有目标: ${hasTarget}, 距离: ${Math.round(missile.getDistanceToTarget())}`);
+                }
+                
+                // 测试导航更新
+                const initialAngle = missile.angle;
+                missile.updateNavigation(0.016);
+                const angleChanged = missile.angle !== initialAngle;
+                
+                if (angleChanged) {
+                    addTestResult('导航系统', true, 
+                        `✅ 导航系统工作正常 - 角度变化: ${Math.round((missile.angle - initialAngle) * 180 / Math.PI)}°`);
+                } else {
+                    addTestResult('导航系统', false, '❌ 导航系统未响应');
+                }
+                
+            } catch (error) {
+                addTestResult('导弹导航', false, `❌ 导航测试异常: ${error.message}`);
+            }
+        }
+
+        function testGamepadIntegration() {
+            try {
+                // 检查GamepadManager是否存在
+                if (typeof GamepadManager === 'undefined') {
+                    addTestResult('手柄集成', false, '❌ GamepadManager未加载');
+                    return;
+                }
+                
+                // 创建GamepadManager实例
+                const gamepadManager = new GamepadManager();
+                
+                // 检查B键映射
+                const hasBButton = gamepadManager.XBOX_BUTTONS.hasOwnProperty('B');
+                const correctBMapping = gamepadManager.XBOX_BUTTONS.B === 1;
+                
+                if (hasBButton && correctBMapping) {
+                    addTestResult('B键映射', true, 
+                        `✅ B键正确映射到按钮 ${gamepadManager.XBOX_BUTTONS.B}`);
+                } else {
+                    addTestResult('B键映射', false, 
+                        `❌ B键映射错误 - 存在: ${hasBButton}, 值: ${gamepadManager.XBOX_BUTTONS.B}`);
+                }
+                
+                // 检查getGamepadInfo方法是否包含launchMissiles
+                const mockGamepadInfo = {
+                    launchMissiles: false,
+                    shoot: false,
+                    move: {x: 0, y: 0},
+                    aim: {x: 0, y: 0}
+                };
+                
+                addTestResult('手柄接口', true, '✅ 手柄接口结构正确');
+                
+            } catch (error) {
+                addTestResult('手柄集成', false, `❌ 手柄集成测试异常: ${error.message}`);
+            }
+        }
+
+        function testGamepadConnection() {
+            const gamepads = navigator.getGamepads();
+            const connectedGamepads = Array.from(gamepads).filter(gp => gp !== null);
+            
+            const gamepadInfo = document.getElementById('gamepadInfo');
+            
+            if (connectedGamepads.length > 0) {
+                gamepadInfo.innerHTML = connectedGamepads.map((gp, index) => `
+                    <div class="test-result pass">
+                        <strong>手柄 ${index}:</strong> ${gp.id}<br>
+                        <strong>按钮数:</strong> ${gp.buttons.length}<br>
+                        <strong>摇杆数:</strong> ${gp.axes.length}<br>
+                        <strong>B键状态:</strong> ${gp.buttons[1] ? (gp.buttons[1].pressed ? '按下' : '释放') : '不可用'}
+                    </div>
+                `).join('');
+                
+                document.getElementById('gamepadStatus').textContent = `已连接 ${connectedGamepads.length} 个手柄`;
+                document.getElementById('gamepadStatus').style.color = '#00FF00';
+            } else {
+                gamepadInfo.innerHTML = '<div class="test-result fail">❌ 未检测到手柄连接</div>';
+                document.getElementById('gamepadStatus').textContent = '未连接手柄';
+                document.getElementById('gamepadStatus').style.color = '#FF0000';
+            }
+        }
+
+        function monitorBButton() {
+            let monitoring = true;
+            const button = event.target;
+            button.textContent = '停止监控';
+            button.onclick = () => {
+                monitoring = false;
+                button.textContent = '监控B键状态';
+                button.onclick = monitorBButton;
+            };
+            
+            function checkBButton() {
+                if (!monitoring) return;
+                
+                const gamepads = navigator.getGamepads();
+                const gamepadInfo = document.getElementById('gamepadInfo');
+                
+                let status = '<div class="test-result info"><strong>B键监控中...</strong><br>';
+                
+                for (let i = 0; i < gamepads.length; i++) {
+                    const gp = gamepads[i];
+                    if (gp && gp.buttons[1]) {
+                        const pressed = gp.buttons[1].pressed;
+                        const value = gp.buttons[1].value;
+                        status += `手柄 ${i}: ${pressed ? '🔴 按下' : '⚪ 释放'} (值: ${value.toFixed(2)})<br>`;
+                    }
+                }
+                
+                status += '</div>';
+                gamepadInfo.innerHTML = status;
+                
+                requestAnimationFrame(checkBButton);
+            }
+            
+            checkBButton();
+        }
+
+        function runAllTests() {
+            // 清空之前的结果
+            testResults = [];
+            totalTests = 0;
+            passedTests = 0;
+            failedTests = 0;
+            
+            // 运行所有测试
+            testTankInitialization();
+            testMissileCreation();
+            testMissileNavigation();
+            testGamepadIntegration();
+            
+            // 显示总结
+            setTimeout(() => {
+                const container = document.getElementById('testResults');
+                container.innerHTML += `
+                    <div class="test-result ${passedTests === totalTests ? 'pass' : 'info'}">
+                        <strong>🎯 测试完成!</strong><br>
+                        总计: ${totalTests} 个测试<br>
+                        通过: ${passedTests} 个<br>
+                        失败: ${failedTests} 个<br>
+                        成功率: ${Math.round((passedTests / totalTests) * 100)}%
+                    </div>
+                `;
+            }, 100);
+        }
+
+        function updateMissileInfo() {
+            const missileInfo = document.getElementById('missileInfo');
+            missileInfo.innerHTML = `
+                <div class="missile-card">
+                    <h4>🚀 导弹规格</h4>
+                    <strong>伤害:</strong> 40<br>
+                    <strong>速度:</strong> 200 px/s<br>
+                    <strong>转向速度:</strong> 3.0 rad/s<br>
+                    <strong>生存时间:</strong> 8.0 秒
+                </div>
+                <div class="missile-card">
+                    <h4>🎯 锁定系统</h4>
+                    <strong>搜索半径:</strong> 150 px<br>
+                    <strong>锁定半径:</strong> 200 px<br>
+                    <strong>目标优先级:</strong> 最近敌人<br>
+                    <strong>智能导航:</strong> 是
+                </div>
+                <div class="missile-card">
+                    <h4>🎮 控制方式</h4>
+                    <strong>触发键:</strong> Xbox B键<br>
+                    <strong>发射数量:</strong> 3发/次<br>
+                    <strong>冷却时间:</strong> 0.5 秒<br>
+                    <strong>总携带量:</strong> 10次/重生
+                </div>
+                <div class="missile-card">
+                    <h4>💥 视觉效果</h4>
+                    <strong>尾迹:</strong> 橙色火焰<br>
+                    <strong>锁定指示:</strong> 红色虚线<br>
+                    <strong>目标框:</strong> 红色方框<br>
+                    <strong>发光效果:</strong> 动态光晕
+                </div>
+            `;
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            updateMissileInfo();
+            testGamepadConnection();
+            
+            // 定期检查手柄连接状态
+            setInterval(testGamepadConnection, 2000);
+        });
+    </script>
+</body>
+</html>

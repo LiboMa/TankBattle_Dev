@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Battle Game - Unit Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-suite {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin: 20px 0;
+            padding: 20px;
+        }
+        
+        .test-suite h2 {
+            color: #00bfff;
+            margin-top: 0;
+        }
+        
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #666;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-case.passed {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .test-case.failed {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .test-case.skipped {
+            border-left-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .test-result {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .test-error {
+            color: #ff6666;
+            font-size: 11px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+        }
+        
+        .test-summary {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .run-tests-btn {
+            background: linear-gradient(135deg, #00aa00, #00ff00);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .run-tests-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4);
+        }
+        
+        .clear-btn {
+            background: linear-gradient(135deg, #aa0000, #ff0000);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Tank Battle Game - Unit Tests</h1>
+            <p>Comprehensive test suite for game components</p>
+            <button class="run-tests-btn" onclick="runAllTests()">🚀 Run All Tests</button>
+            <button class="run-tests-btn clear-btn" onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+        
+        <div class="test-summary" id="testSummary" style="display: none;">
+            <h3>📊 Test Results Summary</h3>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="totalTests">0</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="passedTests" style="color: #00ff00;">0</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="failedTests" style="color: #ff0000;">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="skippedTests" style="color: #ffff00;">0</div>
+                    <div class="stat-label">Skipped</div>
+                </div>
+            </div>
+            <div id="testDuration"></div>
+        </div>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <!-- 引入游戏配置和核心代码 -->
+    <script src="game_config.js"></script>
+    <script src="audio_manager.js"></script>
+    <script>
+        // 简化的测试框架
+        class TestFramework {
+            constructor() {
+                this.testSuites = [];
+                this.results = {
+                    total: 0,
+                    passed: 0,
+                    failed: 0,
+                    skipped: 0
+                };
+                this.startTime = 0;
+            }
+            
+            describe(suiteName, testFunction) {
+                const suite = {
+                    name: suiteName,
+                    tests: [],
+                    beforeEach: null,
+                    afterEach: null
+                };
+                
+                const context = {
+                    it: (testName, testFunction) => {
+                        suite.tests.push({
+                            name: testName,
+                            function: testFunction,
+                            status: 'pending'
+                        });
+                    },
+                    beforeEach: (fn) => { suite.beforeEach = fn; },
+                    afterEach: (fn) => { suite.afterEach = fn; }
+                };
+                
+                testFunction.call(context);
+                this.testSuites.push(suite);
+            }
+            
+            async runAllTests() {
+                this.startTime = Date.now();
+                this.results = { total: 0, passed: 0, failed: 0, skipped: 0 };
+                
+                const resultsContainer = document.getElementById('testResults');
+                resultsContainer.innerHTML = '';
+                
+                for (const suite of this.testSuites) {
+                    await this.runTestSuite(suite);
+                }
+                
+                this.displaySummary();
+            }
+            
+            async runTestSuite(suite) {
+                const suiteElement = document.createElement('div');
+                suiteElement.className = 'test-suite';
+                suiteElement.innerHTML = `<h2>📦 ${suite.name}</h2>`;
+                
+                for (const test of suite.tests) {
+                    this.results.total++;
+                    
+                    const testElement = document.createElement('div');
+                    testElement.className = 'test-case';
+                    
+                    try {
+                        if (suite.beforeEach) suite.beforeEach();
+                        
+                        await test.function();
+                        
+                        test.status = 'passed';
+                        this.results.passed++;
+                        testElement.classList.add('passed');
+                        testElement.innerHTML = `
+                            <div class="test-name">✅ ${test.name}</div>
+                            <div class="test-result">PASSED</div>
+                        `;
+                        
+                        if (suite.afterEach) suite.afterEach();
+                    } catch (error) {
+                        test.status = 'failed';
+                        this.results.failed++;
+                        testElement.classList.add('failed');
+                        testElement.innerHTML = `
+                            <div class="test-name">❌ ${test.name}</div>
+                            <div class="test-result">FAILED</div>
+                            <div class="test-error">${error.message}</div>
+                        `;
+                    }
+                    
+                    suiteElement.appendChild(testElement);
+                }
+                
+                document.getElementById('testResults').appendChild(suiteElement);
+            }
+            
+            displaySummary() {
+                const duration = Date.now() - this.startTime;
+                const summaryElement = document.getElementById('testSummary');
+                
+                document.getElementById('totalTests').textContent = this.results.total;
+                document.getElementById('passedTests').textContent = this.results.passed;
+                document.getElementById('failedTests').textContent = this.results.failed;
+                document.getElementById('skippedTests').textContent = this.results.skipped;
+                document.getElementById('testDuration').textContent = `Completed in ${duration}ms`;
+                
+                summaryElement.style.display = 'block';
+            }
+        }
+        
+        // 断言函数
+        const assert = {
+            equal: (actual, expected, message = '') => {
+                if (actual !== expected) {
+                    throw new Error(`${message}\nExpected: ${expected}\nActual: ${actual}`);
+                }
+            },
+            
+            notEqual: (actual, expected, message = '') => {
+                if (actual === expected) {
+                    throw new Error(`${message}\nExpected not to equal: ${expected}`);
+                }
+            },
+            
+            true: (value, message = '') => {
+                if (value !== true) {
+                    throw new Error(`${message}\nExpected: true\nActual: ${value}`);
+                }
+            },
+            
+            false: (value, message = '') => {
+                if (value !== false) {
+                    throw new Error(`${message}\nExpected: false\nActual: ${value}`);
+                }
+            },
+            
+            throws: (fn, message = '') => {
+                try {
+                    fn();
+                    throw new Error(`${message}\nExpected function to throw an error`);
+                } catch (error) {
+                    // Expected behavior
+                }
+            },
+            
+            approximately: (actual, expected, tolerance = 0.001, message = '') => {
+                if (Math.abs(actual - expected) > tolerance) {
+                    throw new Error(`${message}\nExpected: ${expected} (±${tolerance})\nActual: ${actual}`);
+                }
+            },
+            
+            instanceOf: (actual, expectedClass, message = '') => {
+                if (!(actual instanceof expectedClass)) {
+                    throw new Error(`${message}\nExpected instance of: ${expectedClass.name}\nActual: ${actual.constructor.name}`);
+                }
+            }
+        };
+        
+        // 创建测试框架实例
+        const testFramework = new TestFramework();
+        
+        // ==================== 测试用例定义 ====================
+        
+        // Vector2 类测试
+        testFramework.describe('Vector2 Class', function() {
+            this.it('should create vector with default values', () => {
+                const v = new Vector2();
+                assert.equal(v.x, 0, 'Default x should be 0');
+                assert.equal(v.y, 0, 'Default y should be 0');
+            });
+            
+            this.it('should create vector with custom values', () => {
+                const v = new Vector2(3, 4);
+                assert.equal(v.x, 3, 'X should be 3');
+                assert.equal(v.y, 4, 'Y should be 4');
+            });
+            
+            this.it('should add vectors correctly', () => {
+                const v1 = new Vector2(1, 2);
+                const v2 = new Vector2(3, 4);
+                const result = v1.add(v2);
+                assert.equal(result.x, 4, 'Added X should be 4');
+                assert.equal(result.y, 6, 'Added Y should be 6');
+            });
+            
+            this.it('should subtract vectors correctly', () => {
+                const v1 = new Vector2(5, 7);
+                const v2 = new Vector2(2, 3);
+                const result = v1.subtract(v2);
+                assert.equal(result.x, 3, 'Subtracted X should be 3');
+                assert.equal(result.y, 4, 'Subtracted Y should be 4');
+            });
+            
+            this.it('should multiply vector by scalar', () => {
+                const v = new Vector2(2, 3);
+                const result = v.multiply(2);
+                assert.equal(result.x, 4, 'Multiplied X should be 4');
+                assert.equal(result.y, 6, 'Multiplied Y should be 6');
+            });
+            
+            this.it('should calculate magnitude correctly', () => {
+                const v = new Vector2(3, 4);
+                const magnitude = v.magnitude();
+                assert.equal(magnitude, 5, 'Magnitude should be 5');
+            });
+            
+            this.it('should normalize vector correctly', () => {
+                const v = new Vector2(3, 4);
+                const normalized = v.normalize();
+                assert.approximately(normalized.magnitude(), 1, 0.001, 'Normalized vector magnitude should be 1');
+            });
+            
+            this.it('should handle zero vector normalization', () => {
+                const v = new Vector2(0, 0);
+                const normalized = v.normalize();
+                assert.equal(normalized.x, 0, 'Normalized zero vector X should be 0');
+                assert.equal(normalized.y, 0, 'Normalized zero vector Y should be 0');
+            });
+        });
+        
+        // GameConfig 测试
+        testFramework.describe('GameConfig', function() {
+            this.it('should have bullet configuration', () => {
+                assert.true(typeof GameConfig.bullet === 'object', 'Bullet config should exist');
+                assert.true(GameConfig.bullet.speed > 0, 'Bullet speed should be positive');
+                assert.true(GameConfig.bullet.radius > 0, 'Bullet radius should be positive');
+            });
+            
+            this.it('should have difficulty levels', () => {
+                assert.true(Array.isArray(GameConfig.difficulty.levels), 'Levels should be an array');
+                assert.true(GameConfig.difficulty.levels.length === 8, 'Should have 8 levels');
+            });
+            
+            this.it('should have valid level progression', () => {
+                const levels = GameConfig.difficulty.levels;
+                for (let i = 1; i < levels.length; i++) {
+                    assert.true(levels[i].killTarget >= levels[i-1].killTarget, 
+                        `Level ${i+1} should have equal or more enemies than level ${i}`);
+                }
+            });
+            
+            this.it('should have player configuration', () => {
+                assert.true(typeof GameConfig.player === 'object', 'Player config should exist');
+                assert.true(GameConfig.player.maxHealth > 0, 'Player max health should be positive');
+                assert.true(GameConfig.player.speed > 0, 'Player speed should be positive');
+            });
+        });
+        
+        // 模拟Tank类进行测试
+        testFramework.describe('Tank Class (Simulated)', function() {
+            let mockTank;
+            
+            this.beforeEach(() => {
+                // 创建模拟Tank对象
+                mockTank = {
+                    x: 100,
+                    y: 100,
+                    width: 30,
+                    height: 20,
+                    health: 100,
+                    maxHealth: 100,
+                    isPlayer: true,
+                    getBounds: function() {
+                        return {
+                            x: this.x - this.width/2,
+                            y: this.y - this.height/2,
+                            width: this.width,
+                            height: this.height
+                        };
+                    }
+                };
+            });
+            
+            this.it('should have correct initial position', () => {
+                assert.equal(mockTank.x, 100, 'Initial X position should be 100');
+                assert.equal(mockTank.y, 100, 'Initial Y position should be 100');
+            });
+            
+            this.it('should have correct dimensions', () => {
+                assert.equal(mockTank.width, 30, 'Tank width should be 30');
+                assert.equal(mockTank.height, 20, 'Tank height should be 20');
+            });
+            
+            this.it('should calculate bounds correctly', () => {
+                const bounds = mockTank.getBounds();
+                assert.equal(bounds.x, 85, 'Bounds X should be 85');
+                assert.equal(bounds.y, 90, 'Bounds Y should be 90');
+                assert.equal(bounds.width, 30, 'Bounds width should be 30');
+                assert.equal(bounds.height, 20, 'Bounds height should be 20');
+            });
+            
+            this.it('should have full health initially', () => {
+                assert.equal(mockTank.health, mockTank.maxHealth, 'Health should equal max health');
+            });
+        });
+        
+        // 碰撞检测测试
+        testFramework.describe('Collision Detection', function() {
+            const checkCollision = (rect1, rect2) => {
+                return rect1.x < rect2.x + rect2.width &&
+                       rect1.x + rect1.width > rect2.x &&
+                       rect1.y < rect2.y + rect2.height &&
+                       rect1.y + rect1.height > rect2.y;
+            };
+            
+            this.it('should detect collision between overlapping rectangles', () => {
+                const rect1 = { x: 0, y: 0, width: 10, height: 10 };
+                const rect2 = { x: 5, y: 5, width: 10, height: 10 };
+                assert.true(checkCollision(rect1, rect2), 'Should detect collision');
+            });
+            
+            this.it('should not detect collision between separate rectangles', () => {
+                const rect1 = { x: 0, y: 0, width: 10, height: 10 };
+                const rect2 = { x: 20, y: 20, width: 10, height: 10 };
+                assert.false(checkCollision(rect1, rect2), 'Should not detect collision');
+            });
+            
+            this.it('should detect edge collision', () => {
+                const rect1 = { x: 0, y: 0, width: 10, height: 10 };
+                const rect2 = { x: 10, y: 0, width: 10, height: 10 };
+                assert.false(checkCollision(rect1, rect2), 'Edge touching should not be collision');
+            });
+            
+            this.it('should handle zero-size rectangles', () => {
+                const rect1 = { x: 0, y: 0, width: 0, height: 0 };
+                const rect2 = { x: 0, y: 0, width: 10, height: 10 };
+                assert.false(checkCollision(rect1, rect2), 'Zero-size rectangle should not collide');
+            });
+        });
+        
+        // 数学工具函数测试
+        testFramework.describe('Math Utilities', function() {
+            this.it('should calculate distance correctly', () => {
+                const distance = (x1, y1, x2, y2) => {
+                    return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                };
+                
+                const dist = distance(0, 0, 3, 4);
+                assert.equal(dist, 5, 'Distance should be 5');
+            });
+            
+            this.it('should calculate angle correctly', () => {
+                const angle = Math.atan2(1, 1);
+                assert.approximately(angle, Math.PI / 4, 0.001, 'Angle should be π/4');
+            });
+            
+            this.it('should clamp values correctly', () => {
+                const clamp = (value, min, max) => {
+                    return Math.min(Math.max(value, min), max);
+                };
+                
+                assert.equal(clamp(5, 0, 10), 5, 'Value within range should remain unchanged');
+                assert.equal(clamp(-5, 0, 10), 0, 'Value below min should be clamped to min');
+                assert.equal(clamp(15, 0, 10), 10, 'Value above max should be clamped to max');
+            });
+        });
+        
+        // 游戏状态测试
+        testFramework.describe('Game State Management', function() {
+            let gameState;
+            
+            this.beforeEach(() => {
+                gameState = {
+                    current: 'menu',
+                    level: 1,
+                    score: 0,
+                    lives: 3,
+                    setState: function(newState) {
+                        this.current = newState;
+                    }
+                };
+            });
+            
+            this.it('should initialize with menu state', () => {
+                assert.equal(gameState.current, 'menu', 'Initial state should be menu');
+            });
+            
+            this.it('should change state correctly', () => {
+                gameState.setState('playing');
+                assert.equal(gameState.current, 'playing', 'State should change to playing');
+            });
+            
+            this.it('should have valid initial values', () => {
+                assert.equal(gameState.level, 1, 'Initial level should be 1');
+                assert.equal(gameState.score, 0, 'Initial score should be 0');
+                assert.equal(gameState.lives, 3, 'Initial lives should be 3');
+            });
+        });
+        
+        // 音频管理器测试
+        testFramework.describe('Audio Manager', function() {
+            this.it('should create AudioManager instance', () => {
+                const audioManager = new AudioManager();
+                assert.instanceOf(audioManager, AudioManager, 'Should create AudioManager instance');
+            });
+            
+            this.it('should have default volume settings', () => {
+                const audioManager = new AudioManager();
+                assert.true(audioManager.masterVolume >= 0 && audioManager.masterVolume <= 1, 
+                    'Master volume should be between 0 and 1');
+                assert.true(audioManager.soundVolume >= 0 && audioManager.soundVolume <= 1, 
+                    'Sound volume should be between 0 and 1');
+                assert.true(audioManager.musicVolume >= 0 && audioManager.musicVolume <= 1, 
+                    'Music volume should be between 0 and 1');
+            });
+            
+            this.it('should have sound and music enabled by default', () => {
+                const audioManager = new AudioManager();
+                assert.true(audioManager.soundEnabled, 'Sound should be enabled by default');
+                assert.true(audioManager.musicEnabled, 'Music should be enabled by default');
+            });
+            
+            this.it('should toggle sound correctly', () => {
+                const audioManager = new AudioManager();
+                const initialState = audioManager.soundEnabled;
+                audioManager.toggleSound();
+                assert.notEqual(audioManager.soundEnabled, initialState, 'Sound state should toggle');
+            });
+        });
+        
+        // 性能测试
+        testFramework.describe('Performance Tests', function() {
+            this.it('should handle large number of objects efficiently', () => {
+                const startTime = performance.now();
+                const objects = [];
+                
+                // 创建1000个对象
+                for (let i = 0; i < 1000; i++) {
+                    objects.push({
+                        x: Math.random() * 800,
+                        y: Math.random() * 600,
+                        width: 10,
+                        height: 10
+                    });
+                }
+                
+                // 执行碰撞检测
+                let collisions = 0;
+                for (let i = 0; i < objects.length; i++) {
+                    for (let j = i + 1; j < objects.length; j++) {
+                        const obj1 = objects[i];
+                        const obj2 = objects[j];
+                        if (obj1.x < obj2.x + obj2.width &&
+                            obj1.x + obj1.width > obj2.x &&
+                            obj1.y < obj2.y + obj2.height &&
+                            obj1.y + obj1.height > obj2.y) {
+                            collisions++;
+                        }
+                    }
+                }
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                assert.true(duration < 100, `Performance test should complete in under 100ms (took ${duration.toFixed(2)}ms)`);
+            });
+            
+            this.it('should handle vector operations efficiently', () => {
+                const startTime = performance.now();
+                
+                // 执行大量向量运算
+                for (let i = 0; i < 10000; i++) {
+                    const v1 = new Vector2(Math.random(), Math.random());
+                    const v2 = new Vector2(Math.random(), Math.random());
+                    const result = v1.add(v2).multiply(2).normalize();
+                }
+                
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                assert.true(duration < 50, `Vector operations should complete in under 50ms (took ${duration.toFixed(2)}ms)`);
+            });
+        });
+        
+        // 边界条件测试
+        testFramework.describe('Edge Cases', function() {
+            this.it('should handle negative coordinates', () => {
+                const v = new Vector2(-5, -10);
+                assert.equal(v.x, -5, 'Should handle negative X');
+                assert.equal(v.y, -10, 'Should handle negative Y');
+            });
+            
+            this.it('should handle very large numbers', () => {
+                const v = new Vector2(1e6, 1e6);
+                const magnitude = v.magnitude();
+                assert.true(magnitude > 0, 'Should handle large numbers');
+                assert.true(isFinite(magnitude), 'Result should be finite');
+            });
+            
+            this.it('should handle very small numbers', () => {
+                const v = new Vector2(1e-10, 1e-10);
+                const magnitude = v.magnitude();
+                assert.true(magnitude >= 0, 'Should handle small numbers');
+                assert.true(isFinite(magnitude), 'Result should be finite');
+            });
+            
+            this.it('should handle NaN values gracefully', () => {
+                const v = new Vector2(NaN, 5);
+                assert.true(isNaN(v.x), 'Should preserve NaN');
+                assert.equal(v.y, 5, 'Should preserve valid value');
+            });
+        });
+        
+        // 全局函数
+        function runAllTests() {
+            testFramework.runAllTests();
+        }
+        
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('testSummary').style.display = 'none';
+        }
+        
+        // 页面加载完成后自动运行测试
+        window.addEventListener('load', () => {
+            console.log('🧪 Unit Test Framework Loaded');
+            console.log('📊 Total Test Suites:', testFramework.testSuites.length);
+            console.log('🚀 Ready to run tests!');
+        });
+    </script>
+</body>
+</html>

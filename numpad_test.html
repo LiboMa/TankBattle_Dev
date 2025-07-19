@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numpad Control Test - Tank Battle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: 'Courier New', monospace;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #FFD700;
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .numpad-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #333;
+        }
+        
+        .numpad-key {
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.1s;
+            cursor: pointer;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .numpad-key.pressed {
+            background: #FFD700;
+            border-color: #FFD700;
+            color: #000;
+            transform: scale(0.95);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+        
+        .key-function {
+            font-size: 12px;
+            color: #AAA;
+            margin-top: 5px;
+        }
+        
+        .numpad-key.pressed .key-function {
+            color: #333;
+        }
+        
+        .instructions {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        
+        .control-mapping {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .control-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .status-display {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .status-label {
+            color: #AAA;
+        }
+        
+        .status-value {
+            font-weight: bold;
+            color: #00FF88;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #00AA00, #00FF00);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 12px 24px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.1s;
+        }
+        
+        .test-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .test-button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔢 Numpad Control Test</h1>
+            <p>Test your numeric keypad controls for Tank Battle Player 2</p>
+        </div>
+        
+        <div class="numpad-layout">
+            <!-- Row 1 -->
+            <div class="numpad-key" data-key="Numpad7" id="key-7">
+                7
+                <div class="key-function">↖ Up-Left</div>
+            </div>
+            <div class="numpad-key" data-key="Numpad8" id="key-8">
+                8
+                <div class="key-function">↑ Up</div>
+            </div>
+            <div class="numpad-key" data-key="Numpad9" id="key-9">
+                9
+                <div class="key-function">↗ Up-Right</div>
+            </div>
+            
+            <!-- Row 2 -->
+            <div class="numpad-key" data-key="Numpad4" id="key-4">
+                4
+                <div class="key-function">← Left</div>
+            </div>
+            <div class="numpad-key" data-key="Numpad5" id="key-5">
+                5
+                <div class="key-function">🔫 Shoot</div>
+            </div>
+            <div class="numpad-key" data-key="Numpad6" id="key-6">
+                6
+                <div class="key-function">→ Right</div>
+            </div>
+            
+            <!-- Row 3 -->
+            <div class="numpad-key" data-key="Numpad1" id="key-1">
+                1
+                <div class="key-function">↙ Down-Left</div>
+            </div>
+            <div class="numpad-key" data-key="Numpad2" id="key-2">
+                2
+                <div class="key-function">↓ Down</div>
+            </div>
+            <div class="numpad-key" data-key="Numpad3" id="key-3">
+                3
+                <div class="key-function">↘ Down-Right</div>
+            </div>
+            
+            <!-- Row 4 -->
+            <div class="numpad-key" data-key="Numpad0" id="key-0" style="grid-column: span 2;">
+                0
+                <div class="key-function">🔫 Shoot</div>
+            </div>
+            <div class="numpad-key" data-key="NumpadEnter" id="key-enter">
+                Enter
+                <div class="key-function">🔫 Shoot</div>
+            </div>
+        </div>
+        
+        <div class="status-display">
+            <h3 style="color: #00BFFF; text-align: center;">🎮 Control Status</h3>
+            
+            <div class="status-row">
+                <span class="status-label">Movement Direction:</span>
+                <span class="status-value" id="movement-status">None</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Shooting:</span>
+                <span class="status-value" id="shooting-status">Not Shooting</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Last Key Pressed:</span>
+                <span class="status-value" id="last-key">None</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Keys Currently Held:</span>
+                <span class="status-value" id="held-keys">None</span>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>🎯 Numpad Control Mapping</h3>
+            <div class="control-mapping">
+                <div class="control-item"><strong>Movement:</strong> 8↑ 2↓ 4← 6→</div>
+                <div class="control-item"><strong>Diagonal:</strong> 7↖ 9↗ 1↙ 3↘</div>
+                <div class="control-item"><strong>Shooting:</strong> 0, 5, Enter</div>
+                <div class="control-item"><strong>8-Direction:</strong> Full 360° control</div>
+            </div>
+            
+            <p><strong>How to Test:</strong></p>
+            <ol>
+                <li>Make sure Num Lock is ON</li>
+                <li>Press numpad keys to see them light up</li>
+                <li>Try movement keys (1-9) for different directions</li>
+                <li>Try shooting keys (0, 5, Enter)</li>
+                <li>Test diagonal movement combinations</li>
+            </ol>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="test-button" onclick="testAllKeys()">🧪 Test All Keys</button>
+                <button class="test-button" onclick="resetTest()">🔄 Reset Test</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let pressedKeys = new Set();
+        let lastKeyPressed = '';
+        
+        // 键盘事件监听
+        document.addEventListener('keydown', (e) => {
+            const keyCode = e.code;
+            
+            // 只处理小键盘按键
+            if (keyCode.startsWith('Numpad')) {
+                e.preventDefault();
+                
+                pressedKeys.add(keyCode);
+                lastKeyPressed = keyCode;
+                
+                // 更新视觉反馈
+                updateKeyVisual(keyCode, true);
+                updateStatus();
+                
+                console.log('Numpad key pressed:', keyCode);
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            const keyCode = e.code;
+            
+            if (keyCode.startsWith('Numpad')) {
+                pressedKeys.delete(keyCode);
+                
+                // 更新视觉反馈
+                updateKeyVisual(keyCode, false);
+                updateStatus();
+                
+                console.log('Numpad key released:', keyCode);
+            }
+        });
+        
+        // 更新按键视觉效果
+        function updateKeyVisual(keyCode, pressed) {
+            const keyMap = {
+                'Numpad0': 'key-0',
+                'Numpad1': 'key-1',
+                'Numpad2': 'key-2',
+                'Numpad3': 'key-3',
+                'Numpad4': 'key-4',
+                'Numpad5': 'key-5',
+                'Numpad6': 'key-6',
+                'Numpad7': 'key-7',
+                'Numpad8': 'key-8',
+                'Numpad9': 'key-9',
+                'NumpadEnter': 'key-enter'
+            };
+            
+            const elementId = keyMap[keyCode];
+            if (elementId) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    if (pressed) {
+                        element.classList.add('pressed');
+                    } else {
+                        element.classList.remove('pressed');
+                    }
+                }
+            }
+        }
+        
+        // 更新状态显示
+        function updateStatus() {
+            // 移动状态
+            const movementKeys = {
+                'Numpad8': 'Up ↑',
+                'Numpad2': 'Down ↓',
+                'Numpad4': 'Left ←',
+                'Numpad6': 'Right →',
+                'Numpad7': 'Up-Left ↖',
+                'Numpad9': 'Up-Right ↗',
+                'Numpad1': 'Down-Left ↙',
+                'Numpad3': 'Down-Right ↘'
+            };
+            
+            const shootingKeys = ['Numpad0', 'Numpad5', 'NumpadEnter'];
+            
+            // 检查移动
+            const activeMovement = [];
+            for (const key of pressedKeys) {
+                if (movementKeys[key]) {
+                    activeMovement.push(movementKeys[key]);
+                }
+            }
+            
+            // 检查射击
+            const isShooting = Array.from(pressedKeys).some(key => shootingKeys.includes(key));
+            
+            // 更新显示
+            document.getElementById('movement-status').textContent = 
+                activeMovement.length > 0 ? activeMovement.join(' + ') : 'None';
+            
+            document.getElementById('shooting-status').textContent = 
+                isShooting ? '🔫 SHOOTING!' : 'Not Shooting';
+            
+            document.getElementById('last-key').textContent = 
+                lastKeyPressed || 'None';
+            
+            document.getElementById('held-keys').textContent = 
+                pressedKeys.size > 0 ? Array.from(pressedKeys).join(', ') : 'None';
+        }
+        
+        // 测试所有按键
+        function testAllKeys() {
+            const keys = ['Numpad7', 'Numpad8', 'Numpad9', 'Numpad4', 'Numpad5', 'Numpad6', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad0', 'NumpadEnter'];
+            let index = 0;
+            
+            function testNextKey() {
+                if (index < keys.length) {
+                    const key = keys[index];
+                    updateKeyVisual(key, true);
+                    
+                    setTimeout(() => {
+                        updateKeyVisual(key, false);
+                        index++;
+                        setTimeout(testNextKey, 100);
+                    }, 200);
+                }
+            }
+            
+            testNextKey();
+        }
+        
+        // 重置测试
+        function resetTest() {
+            pressedKeys.clear();
+            lastKeyPressed = '';
+            
+            // 清除所有按键高亮
+            document.querySelectorAll('.numpad-key').forEach(key => {
+                key.classList.remove('pressed');
+            });
+            
+            updateStatus();
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            console.log('🔢 Numpad test initialized');
+            updateStatus();
+            
+            // 检查Num Lock状态提示
+            setTimeout(() => {
+                alert('🔢 Make sure Num Lock is ON before testing!\n\nPress any numpad key to start testing.');
+            }, 500);
+        });
+        
+        // 错误处理
+        window.addEventListener('error', (e) => {
+            console.error('Numpad test error:', e.error);
+        });
+    </script>
+</body>
+</html>

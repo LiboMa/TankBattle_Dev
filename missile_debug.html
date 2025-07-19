@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Missile System Debug</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00FF00;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .error { color: #FF0000; }
+        .success { color: #00FF00; }
+        .warning { color: #FFAA00; }
+        .info { color: #0088FF; }
+        
+        button {
+            background: #00AA00;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        button:hover { background: #00FF00; }
+        
+        #log {
+            height: 300px;
+            overflow-y: auto;
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Missile System Debug Console</h1>
+    
+    <div class="debug-panel">
+        <h3>📋 System Status</h3>
+        <div id="systemStatus">Checking...</div>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>🎮 Gamepad Status</h3>
+        <div id="gamepadStatus">Checking...</div>
+        <button onclick="testGamepad()">Test Gamepad</button>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>🧪 Component Tests</h3>
+        <button onclick="testTankCreation()">Test Tank Creation</button>
+        <button onclick="testMissileCreation()">Test Missile Creation</button>
+        <button onclick="testGamepadManager()">Test GamepadManager</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>📝 Debug Log</h3>
+        <div id="log"></div>
+    </div>
+
+    <!-- Load game files -->
+    <script src="game_config.js"></script>
+    <script src="gamepad_manager.js"></script>
+    <script src="audio_manager.js"></script>
+    <script src="tank_game_fixed.js"></script>
+
+    <script>
+        let logElement = document.getElementById('log');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            logElement.innerHTML = '';
+        }
+        
+        function checkSystemStatus() {
+            const status = document.getElementById('systemStatus');
+            let statusHTML = '';
+            
+            // Check if classes are loaded
+            const classes = [
+                'GameConfig',
+                'GamepadManager', 
+                'AudioManager',
+                'Tank',
+                'StrayMissile',
+                'Game'
+            ];
+            
+            classes.forEach(className => {
+                const exists = typeof window[className] !== 'undefined';
+                statusHTML += `<div class="${exists ? 'success' : 'error'}">
+                    ${className}: ${exists ? '✅ Loaded' : '❌ Missing'}
+                </div>`;
+            });
+            
+            status.innerHTML = statusHTML;
+        }
+        
+        function checkGamepadStatus() {
+            const status = document.getElementById('gamepadStatus');
+            let statusHTML = '';
+            
+            try {
+                // Check if GamepadManager exists
+                if (typeof GamepadManager === 'undefined') {
+                    statusHTML += '<div class="error">❌ GamepadManager not found</div>';
+                    status.innerHTML = statusHTML;
+                    return;
+                }
+                
+                // Create GamepadManager instance
+                const gm = new GamepadManager();
+                statusHTML += '<div class="success">✅ GamepadManager created</div>';
+                
+                // Check if getInput method exists
+                if (typeof gm.getInput === 'function') {
+                    statusHTML += '<div class="success">✅ getInput method exists</div>';
+                } else {
+                    statusHTML += '<div class="error">❌ getInput method missing</div>';
+                }
+                
+                // Check connected gamepads
+                const gamepads = navigator.getGamepads();
+                const connected = Array.from(gamepads).filter(gp => gp !== null);
+                statusHTML += `<div class="info">🎮 Connected gamepads: ${connected.length}</div>`;
+                
+                connected.forEach((gp, index) => {
+                    statusHTML += `<div class="info">  ${index}: ${gp.id}</div>`;
+                });
+                
+            } catch (error) {
+                statusHTML += `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+            
+            status.innerHTML = statusHTML;
+        }
+        
+        function testTankCreation() {
+            try {
+                log('🧪 Testing Tank creation...', 'info');
+                
+                const tank = new Tank(100, 100, '#0066FF', {}, true, 1, 1);
+                log('✅ Tank created successfully', 'success');
+                
+                // Check missile properties
+                if (tank.hasOwnProperty('strayMissiles')) {
+                    log(`✅ strayMissiles property: ${tank.strayMissiles}`, 'success');
+                } else {
+                    log('❌ strayMissiles property missing', 'error');
+                }
+                
+                if (tank.hasOwnProperty('maxStrayMissiles')) {
+                    log(`✅ maxStrayMissiles property: ${tank.maxStrayMissiles}`, 'success');
+                } else {
+                    log('❌ maxStrayMissiles property missing', 'error');
+                }
+                
+                if (typeof tank.launchStrayMissiles === 'function') {
+                    log('✅ launchStrayMissiles method exists', 'success');
+                } else {
+                    log('❌ launchStrayMissiles method missing', 'error');
+                }
+                
+                if (typeof tank.updateMissileCooldown === 'function') {
+                    log('✅ updateMissileCooldown method exists', 'success');
+                } else {
+                    log('❌ updateMissileCooldown method missing', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Tank creation failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function testMissileCreation() {
+            try {
+                log('🚀 Testing Missile creation...', 'info');
+                
+                if (typeof StrayMissile === 'undefined') {
+                    log('❌ StrayMissile class not found', 'error');
+                    return;
+                }
+                
+                const owner = new Tank(100, 100, '#0066FF', {}, true, 1, 1);
+                const missile = new StrayMissile(100, 100, owner);
+                log('✅ StrayMissile created successfully', 'success');
+                
+                // Check missile properties
+                const properties = ['x', 'y', 'owner', 'speed', 'damage', 'life', 'angle'];
+                properties.forEach(prop => {
+                    if (missile.hasOwnProperty(prop)) {
+                        log(`✅ ${prop}: ${missile[prop]}`, 'success');
+                    } else {
+                        log(`❌ ${prop} property missing`, 'error');
+                    }
+                });
+                
+                // Check missile methods
+                const methods = ['update', 'render', 'updateTarget', 'updateNavigation'];
+                methods.forEach(method => {
+                    if (typeof missile[method] === 'function') {
+                        log(`✅ ${method} method exists`, 'success');
+                    } else {
+                        log(`❌ ${method} method missing`, 'error');
+                    }
+                });
+                
+            } catch (error) {
+                log(`❌ Missile creation failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function testGamepadManager() {
+            try {
+                log('🎮 Testing GamepadManager...', 'info');
+                
+                if (typeof GamepadManager === 'undefined') {
+                    log('❌ GamepadManager class not found', 'error');
+                    return;
+                }
+                
+                const gm = new GamepadManager();
+                log('✅ GamepadManager created', 'success');
+                
+                // Test getInput method
+                if (typeof gm.getInput === 'function') {
+                    log('✅ getInput method exists', 'success');
+                    
+                    try {
+                        const input = gm.getInput(0);
+                        log(`✅ getInput(0) returned: ${input ? 'object' : 'null'}`, 'success');
+                        
+                        if (input && input.hasOwnProperty('launchMissiles')) {
+                            log(`✅ launchMissiles property: ${input.launchMissiles}`, 'success');
+                        } else {
+                            log('❌ launchMissiles property missing from input', 'error');
+                        }
+                    } catch (error) {
+                        log(`❌ getInput(0) failed: ${error.message}`, 'error');
+                    }
+                } else {
+                    log('❌ getInput method missing', 'error');
+                }
+                
+                // Test B button mapping
+                if (gm.XBOX_BUTTONS && gm.XBOX_BUTTONS.B === 1) {
+                    log('✅ B button correctly mapped to button 1', 'success');
+                } else {
+                    log(`❌ B button mapping incorrect: ${gm.XBOX_BUTTONS ? gm.XBOX_BUTTONS.B : 'undefined'}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ GamepadManager test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function testGamepad() {
+            const gamepads = navigator.getGamepads();
+            const connected = Array.from(gamepads).filter(gp => gp !== null);
+            
+            if (connected.length === 0) {
+                log('⚠️ No gamepads connected', 'warning');
+                return;
+            }
+            
+            connected.forEach((gp, index) => {
+                log(`🎮 Testing gamepad ${index}: ${gp.id}`, 'info');
+                log(`  Buttons: ${gp.buttons.length}`, 'info');
+                log(`  Axes: ${gp.axes.length}`, 'info');
+                
+                if (gp.buttons[1]) {
+                    log(`  B button (1): pressed=${gp.buttons[1].pressed}, value=${gp.buttons[1].value}`, 'info');
+                } else {
+                    log('  B button (1): not available', 'warning');
+                }
+            });
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            checkSystemStatus();
+            checkGamepadStatus();
+            
+            // Update gamepad status periodically
+            setInterval(checkGamepadStatus, 2000);
+            
+            log('🚀 Missile Debug Console initialized', 'success');
+        });
+        
+        // Override console.error to capture errors
+        const originalError = console.error;
+        console.error = function(...args) {
+            log(`💥 Console Error: ${args.join(' ')}`, 'error');
+            originalError.apply(console, args);
+        };
+        
+        // Capture unhandled errors
+        window.addEventListener('error', (e) => {
+            log(`💥 JavaScript Error: ${e.message} at ${e.filename}:${e.lineno}`, 'error');
+        });
+    </script>
+</body>
+</html>

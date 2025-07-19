@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Simple Missile Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+        
+        canvas {
+            border: 2px solid #00FF00;
+            background: #2a3a1a;
+        }
+        
+        .controls {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        }
+        
+        .info {
+            color: #00AAFF;
+        }
+        
+        .success {
+            color: #00FF00;
+        }
+        
+        .error {
+            color: #FF0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Missile System Simple Test</h1>
+    
+    <div class="controls">
+        <div class="info">
+            <strong>Controls:</strong><br>
+            🖱️ <strong>Player 1:</strong> Right Click to launch missiles<br>
+            ⌨️ <strong>Player 1:</strong> Q key to launch missiles<br>
+            ⌨️ <strong>Player 2:</strong> E key to launch missiles<br>
+            🔢 <strong>Player 2:</strong> Numpad + to launch missiles<br>
+            🎮 <strong>Both:</strong> Xbox controller B button
+        </div>
+    </div>
+    
+    <canvas id="testCanvas" width="800" height="600"></canvas>
+    
+    <div id="status" class="controls">
+        <div>Status: <span id="statusText">Initializing...</span></div>
+        <div>Player 1 Missiles: <span id="p1Missiles">10</span>/10</div>
+        <div>Player 2 Missiles: <span id="p2Missiles">10</span>/10</div>
+        <div>Active Missiles: <span id="activeMissiles">0</span></div>
+        <div>Enemies: <span id="enemyCount">0</span></div>
+    </div>
+
+    <!-- Load game files -->
+    <script src="game_config.js"></script>
+    <script src="gamepad_manager.js"></script>
+    <script src="audio_manager.js"></script>
+    <script src="tank_game_fixed.js"></script>
+
+    <script>
+        class SimpleMissileTest {
+            constructor() {
+                this.canvas = document.getElementById('testCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.keys = {};
+                this.mousePos = { x: 0, y: 0 };
+                
+                // Create players
+                this.player1 = new Tank(100, 300, '#0066FF', { useMouse: true }, true, 1, 1);
+                this.player2 = new Tank(200, 300, '#00AA00', { useMouse: false }, true, 1, 2);
+                
+                // Create some enemies
+                this.enemies = [
+                    new Tank(600, 100, '#FF0000', {}, false, 1, 0),
+                    new Tank(650, 200, '#FF0000', {}, false, 1, 0),
+                    new Tank(700, 300, '#FF0000', {}, false, 1, 0),
+                    new Tank(550, 400, '#FF0000', {}, false, 1, 0),
+                    new Tank(750, 150, '#FF0000', {}, false, 1, 0)
+                ];
+                
+                this.missiles = [];
+                this.lastTime = 0;
+                
+                this.setupEventListeners();
+                this.gameLoop();
+                
+                console.log('🚀 Simple Missile Test initialized');
+                this.updateStatus('Ready - Try launching missiles!', 'success');
+            }
+            
+            setupEventListeners() {
+                // Keyboard events
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                });
+                
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+                
+                // Mouse events
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) {
+                        this.keys['MouseLeft'] = true;
+                    } else if (e.button === 2) {
+                        this.keys['MouseRight'] = true;
+                        e.preventDefault();
+                    }
+                });
+                
+                this.canvas.addEventListener('mouseup', (e) => {
+                    if (e.button === 0) {
+                        this.keys['MouseLeft'] = false;
+                    } else if (e.button === 2) {
+                        this.keys['MouseRight'] = false;
+                    }
+                });
+                
+                this.canvas.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mousePos.x = e.clientX - rect.left;
+                    this.mousePos.y = e.clientY - rect.top;
+                });
+            }
+            
+            update(deltaTime) {
+                // Update players
+                this.player1.update(deltaTime, this.keys, this.mousePos, [this.player2], this);
+                this.player2.update(deltaTime, this.keys, this.mousePos, [this.player1], this);
+                
+                // Check missile launches
+                this.checkMissileLaunches();
+                
+                // Update missiles
+                for (let i = this.missiles.length - 1; i >= 0; i--) {
+                    const missile = this.missiles[i];
+                    const stillAlive = missile.update(deltaTime, this.enemies);
+                    
+                    if (!stillAlive || missile.isOutOfBounds(this.width, this.height)) {
+                        this.missiles.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // Check collisions with enemies
+                    for (let j = this.enemies.length - 1; j >= 0; j--) {
+                        const enemy = this.enemies[j];
+                        if (!enemy.alive) continue;
+                        
+                        const dx = missile.x - enemy.x;
+                        const dy = missile.y - enemy.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 20) {
+                            enemy.takeDamage(missile.damage);
+                            this.missiles.splice(i, 1);
+                            
+                            if (!enemy.alive) {
+                                console.log('🎯 Enemy destroyed by missile!');
+                                this.updateStatus('Enemy destroyed!', 'success');
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Update UI
+                this.updateUI();
+            }
+            
+            checkMissileLaunches() {
+                // Player 1 missile launch
+                if ((this.keys['MouseRight'] || this.keys['KeyQ']) && this.player1.strayMissiles > 0) {
+                    const missiles = this.player1.launchStrayMissiles(this.enemies);
+                    if (missiles && missiles.length > 0) {
+                        this.missiles.push(...missiles);
+                        console.log(`🚀 Player 1 launched ${missiles.length} missiles!`);
+                        this.updateStatus(`Player 1 launched ${missiles.length} missiles!`, 'success');
+                        this.keys['MouseRight'] = false;
+                        this.keys['KeyQ'] = false;
+                    }
+                }
+                
+                // Player 2 missile launch
+                if ((this.keys['KeyE'] || this.keys['NumpadAdd']) && this.player2.strayMissiles > 0) {
+                    const missiles = this.player2.launchStrayMissiles(this.enemies);
+                    if (missiles && missiles.length > 0) {
+                        this.missiles.push(...missiles);
+                        console.log(`🚀 Player 2 launched ${missiles.length} missiles!`);
+                        this.updateStatus(`Player 2 launched ${missiles.length} missiles!`, 'success');
+                        this.keys['KeyE'] = false;
+                        this.keys['NumpadAdd'] = false;
+                    }
+                }
+            }
+            
+            render() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2a3a1a';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Draw players
+                this.player1.draw(this.ctx);
+                this.player2.draw(this.ctx);
+                
+                // Draw enemies
+                this.enemies.forEach(enemy => {
+                    if (enemy.alive) {
+                        enemy.draw(this.ctx);
+                    }
+                });
+                
+                // Draw missiles
+                this.missiles.forEach(missile => {
+                    missile.render(this.ctx);
+                });
+                
+                // Draw instructions
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '14px Courier New';
+                this.ctx.fillText('Right Click or Q = Player 1 Missiles', 10, 30);
+                this.ctx.fillText('E or Numpad+ = Player 2 Missiles', 10, 50);
+                
+                // Draw missile tracking info
+                this.ctx.fillStyle = '#32CD32';
+                this.ctx.font = '12px Courier New';
+                let yOffset = 80;
+                this.missiles.forEach((missile, index) => {
+                    const status = missile.hasLocked ? 'LOCKED' : 'SEARCHING';
+                    const targetInfo = missile.target ? `Target: ${Math.round(missile.getDistanceToTarget())}px` : 'No Target';
+                    this.ctx.fillText(`Missile ${index + 1}: ${status} - ${targetInfo}`, 10, yOffset);
+                    yOffset += 15;
+                });
+            }
+            
+            updateUI() {
+                document.getElementById('p1Missiles').textContent = this.player1.strayMissiles;
+                document.getElementById('p2Missiles').textContent = this.player2.strayMissiles;
+                document.getElementById('activeMissiles').textContent = this.missiles.length;
+                document.getElementById('enemyCount').textContent = this.enemies.filter(e => e.alive).length;
+            }
+            
+            updateStatus(message, type = 'info') {
+                const statusElement = document.getElementById('statusText');
+                statusElement.textContent = message;
+                statusElement.className = type;
+            }
+            
+            gameLoop(currentTime = 0) {
+                const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+                this.lastTime = currentTime;
+                
+                if (deltaTime > 0) {
+                    this.update(deltaTime);
+                }
+                this.render();
+                
+                requestAnimationFrame((time) => this.gameLoop(time));
+            }
+        }
+        
+        // Initialize test when page loads
+        window.addEventListener('load', () => {
+            try {
+                new SimpleMissileTest();
+            } catch (error) {
+                console.error('Test initialization failed:', error);
+                document.getElementById('statusText').textContent = `Error: ${error.message}`;
+                document.getElementById('statusText').className = 'error';
+            }
+        });
+    </script>
+</body>
+</html>

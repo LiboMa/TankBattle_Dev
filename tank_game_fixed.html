@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Fighting Game - Fixed</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            border: 3px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+            animation: containerGlow 2s ease-in-out infinite alternate;
+            flex-shrink: 0;
+            margin-right: 15px;
+            background: linear-gradient(45deg, #2d3748, #4a5568);
+        }
+        
+        /* 右侧信息面板 */
+        #infoPanel {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            max-height: 100vh;
+            padding: 5px 0;
+        }
+        
+        @keyframes containerGlow {
+            from { 
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+                border-color: #333;
+            }
+            to { 
+                box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+                border-color: #555;
+            }
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(135deg, #4a5d23 0%, #3d4f1c 50%, #2d3a15 100%);
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            border-radius: 7px;
+            backdrop-filter: blur(5px);
+        }
+        
+        #startScreen h1 {
+            font-size: 2.5em;
+            margin: 0 0 20px 0;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        #startScreen .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #ffff00;
+            animation: subtitleFade 3s ease-in-out infinite;
+        }
+        
+        @keyframes subtitleFade {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+        #startScreen .controls {
+            margin: 20px 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #cccccc;
+        }
+        
+        #startScreen .controls .key {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        #startScreen button {
+            background: linear-gradient(45deg, #00aa00, #00ff00);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+            transition: all 0.3s ease;
+            animation: buttonFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes buttonFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        #startScreen button:hover {
+            background: linear-gradient(45deg, #00ff00, #44ff44);
+            box-shadow: 0 8px 25px rgba(0, 255, 0, 0.5);
+            transform: translateY(-2px) scale(1.05);
+        }
+        
+        #startScreen button:active {
+            transform: translateY(0px) scale(0.98);
+        }
+        
+        .tank-icon {
+            display: inline-block;
+            font-size: 1.5em;
+            margin: 0 10px;
+            animation: tankMove 4s linear infinite;
+        }
+        
+        @keyframes tankMove {
+            0% { transform: translateX(-20px); }
+            50% { transform: translateX(20px); }
+            100% { transform: translateX(-20px); }
+        }
+        
+        .eagle-icon {
+            font-size: 2em;
+            animation: eagleFlap 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes eagleFlap {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        #startScreen p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        #startScreen button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        #startScreen button:hover {
+            background: #45a049;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .health-bar {
+            width: 100px;
+            height: 10px;
+            background: #333;
+            border: 1px solid #666;
+            margin: 2px 0;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s;
+        }
+        
+        .audio-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 12px;
+            z-index: 1000;
+            border: 2px solid #333;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            min-width: 200px;
+            opacity: 0.3;
+        }
+        
+        .audio-controls:hover {
+            opacity: 1;
+        }
+        
+        .audio-controls.active {
+            opacity: 1;
+        }
+        
+        .audio-controls.collapsed {
+            padding: 8px;
+            min-width: auto;
+        }
+        
+        .audio-controls.collapsed .audio-panel {
+            display: none;
+        }
+        
+        .audio-toggle {
+            background: linear-gradient(45deg, #333, #555);
+            color: white;
+            border: 1px solid #666;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .audio-toggle:hover {
+            background: linear-gradient(45deg, #555, #777);
+            transform: translateY(-1px);
+        }
+        
+        .audio-panel {
+            margin-top: 10px;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .audio-controls button {
+            background: #444;
+            color: white;
+            border: 1px solid #666;
+            padding: 6px 12px;
+            margin: 3px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+        }
+        
+        .audio-controls button:hover {
+            background: #666;
+            transform: translateY(-1px);
+        }
+        
+        .audio-controls button.active {
+            background: linear-gradient(45deg, #00aa00, #00cc00);
+            box-shadow: 0 2px 8px rgba(0, 170, 0, 0.3);
+        }
+        
+        .audio-controls input[type="range"] {
+            width: 80px;
+            margin: 0 8px;
+            accent-color: #00aa00;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 11px;
+        }
+        
+        .volume-control label {
+            min-width: 50px;
+            color: #ccc;
+        }
+        
+        /* 坦克图标样式 */
+        .tank-sprite {
+            display: inline-block;
+            width: 30px;
+            height: 20px;
+            background: linear-gradient(45deg, #4a5d23, #6b7c3a);
+            border-radius: 3px;
+            position: relative;
+            margin: 0 10px;
+            animation: tankMove 4s linear infinite;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tank-sprite::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 3px;
+            background: #333;
+            top: 8px;
+            right: -8px;
+            border-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tank-sprite::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #2a3d13;
+            border-radius: 50%;
+            top: 6px;
+            left: 11px;
+            border: 1px solid #1a2d03;
+        }
+        
+        @keyframes tankMove {
+            0% { transform: translateX(-20px); }
+            50% { transform: translateX(20px); }
+            100% { transform: translateX(-20px); }
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            border: 1px solid #333;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        /* Dashboard样式 - 右侧面板 */
+        #gameDashboard {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 20, 0.9) 100%);
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            margin-bottom: 10px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .dashboard-section {
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #555;
+        }
+        
+        .dashboard-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .dashboard-title {
+            color: #FFD700;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .dashboard-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+            font-size: 12px;
+        }
+        
+        .dashboard-label {
+            color: #CCC;
+        }
+        
+        .dashboard-value {
+            color: #00FF00;
+            font-weight: bold;
+        }
+        
+        .dashboard-value.warning {
+            color: #FFA500;
+        }
+        
+        .dashboard-value.danger {
+            color: #FF4444;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 2px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00AA00, #00FF00);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #FF8800, #FFA500);
+        }
+        
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #AA0000, #FF4444);
+        }
+        
+        /* 暂停按钮样式 - 默认隐藏 */
+        #pauseButton {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 170, 0, 0.9) 0%, rgba(0, 200, 0, 0.9) 100%);
+            border: 2px solid #00AA00;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 3px 10px rgba(0, 170, 0, 0.4);
+            display: none; /* 默认隐藏 */
+        }
+        
+        /* 暂停状态下显示Resume按钮 */
+        #pauseButton.paused {
+            display: block;
+            animation: pulseGreen 1.5s ease-in-out infinite;
+        }
+        
+        #pauseButton:hover {
+            background: linear-gradient(135deg, rgba(0, 200, 0, 0.95) 0%, rgba(0, 230, 0, 0.95) 100%);
+            border-color: #00CC00;
+            transform: translateX(-50%) translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 170, 0, 0.6);
+        }
+        
+        /* 暂停状态覆盖层 */
+        #pauseOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            border-radius: 8px;
+        }
+        
+        #pauseOverlay.active {
+            display: flex;
+        }
+        
+        .pause-text {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: pausePulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pausePulse {
+            0%, 100% { 
+                opacity: 0.8;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+        
+        /* 战斗结果统计样式 */
+        #battleResults {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            z-index: 2000;
+            min-width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+            display: none;
+        }
+        
+        .results-title {
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .results-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .results-section h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .results-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        
+        .results-label {
+            color: #CCC;
+        }
+        
+        .results-value {
+            color: #00FF00;
+            font-weight: bold;
+        }
+        
+        .results-value.player1 {
+            color: #0066FF;
+        }
+        
+        .results-value.player2 {
+            color: #00AA00;
+        }
+        
+        .continue-button {
+            background: linear-gradient(45deg, #00aa00, #00cc00);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 170, 0, 0.3);
+        }
+        
+        .continue-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 170, 0, 0.4);
+        }
+        
+        /* 系统信息面板样式 */
+        #systemInfoContainer {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 20, 0.9) 100%);
+            border: 2px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        
+        .system-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%);
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid #666;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .system-toggle:hover {
+            background: linear-gradient(135deg, rgba(10, 10, 10, 0.98) 0%, rgba(40, 40, 40, 0.98) 100%);
+            border-bottom-color: #888;
+        }
+        
+        .toggle-icon {
+            font-size: 14px;
+            margin-right: 6px;
+        }
+        
+        .toggle-text {
+            flex: 1;
+            color: #00BFFF;
+            font-weight: bold;
+        }
+        
+        .toggle-arrow {
+            font-size: 11px;
+            color: #888;
+            transition: transform 0.3s ease;
+        }
+        
+        .system-toggle.expanded .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        
+        #systemInfo {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        #systemInfo.collapsed {
+            max-height: 0;
+            padding: 0 12px;
+            opacity: 0;
+        }
+        
+        .info-section {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #555;
+        }
+        
+        .info-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .info-title {
+            color: #00BFFF;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 12px;
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            font-size: 10px;
+        }
+        
+        .info-label {
+            color: #BBB;
+        }
+        
+        .info-value {
+            color: #00FF88;
+            font-weight: bold;
+            text-align: right;
+        }
+        
+        .info-value.warning {
+            color: #FFA500;
+        }
+        
+        .info-value.error {
+            color: #FF4444;
+        }
+        
+        .info-value.good {
+            color: #00FF00;
+        }
+        
+        /* 滚动条样式 */
+        #infoPanel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #infoPanel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+        
+        #infoPanel::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 0, 0.3);
+            border-radius: 3px;
+        }
+        
+        #infoPanel::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 0, 0.5);
+        }
+        
+        #systemInfo::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        #systemInfo::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+        }
+        
+        #systemInfo::-webkit-scrollbar-thumb {
+            background: rgba(0, 191, 255, 0.3);
+            border-radius: 2px;
+        }
+        
+        #systemInfo::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 191, 255, 0.5);
+        }
+        
+        /* 响应式设计 */
+        @media screen and (max-width: 1200px) {
+            body {
+                padding: 5px;
+            }
+            
+            #infoPanel {
+                width: 280px;
+            }
+            
+            #gameDashboard {
+                padding: 10px;
+                font-size: 12px;
+            }
+            
+            .dashboard-title {
+                font-size: 13px;
+            }
+            
+            .dashboard-row {
+                font-size: 11px;
+            }
+        }
+        
+        @media screen and (max-width: 1000px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                padding: 5px;
+            }
+            
+            #gameContainer {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            #infoPanel {
+                width: 800px;
+                flex-direction: row;
+                max-height: none;
+                gap: 15px;
+            }
+            
+            #gameDashboard, #systemInfoContainer {
+                flex: 1;
+                margin-bottom: 0;
+            }
+        }
+        
+        /* 🎮 游戏设置面板样式 */
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9998;
+            display: none;
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid #333;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .settings-header h2 {
+            color: #FFD700;
+            margin: 0;
+            font-size: 1.5em;
+        }
+        
+        .close-btn {
+            background: #FF4444;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .close-btn:hover {
+            background: #FF6666;
+        }
+        
+        .settings-content {
+            padding: 20px;
+        }
+        
+        .setting-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .setting-section:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-section h3 {
+            color: #00BFFF;
+            margin: 0 0 15px 0;
+            font-size: 1.2em;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .setting-item label {
+            color: #FFFFFF;
+            font-weight: bold;
+            flex: 1;
+        }
+        
+        /* 切换开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input[type="checkbox"] {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #00FF88;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* 音量滑块样式 */
+        .volume-slider {
+            width: 120px;
+            height: 5px;
+            border-radius: 5px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 0 10px;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00BFFF;
+            cursor: pointer;
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00BFFF;
+            cursor: pointer;
+            border: none;
+        }
+        
+        /* 选择框样式 */
+        .setting-select {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+        }
+        
+        .setting-select:focus {
+            outline: none;
+            border-color: #00BFFF;
+        }
+        
+        /* 设置按钮样式 */
+        .settings-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .settings-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.3s;
+        }
+        
+        .settings-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .settings-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #00AA00, #00FF00);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .reset-btn {
+            background: linear-gradient(135deg, #AA5500, #FF8800);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 136, 0, 0.3);
+        }
+        
+        /* 浮动设置按钮 */
+        .floating-settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            color: #000;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        .floating-settings-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+        
+        .floating-settings-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <!-- 暂停覆盖层 -->
+        <div id="pauseOverlay">
+            <div class="pause-text">
+                ⏸️ GAME PAUSED<br>
+                <span style="font-size: 16px; opacity: 0.8;">Press ESC to Resume</span>
+            </div>
+        </div>
+        
+        <!-- 暂停按钮 - 只在暂停时显示 -->
+        <button id="pauseButton" style="display: none;">⏸️ PAUSE</button>
+        
+        <!-- 战斗结果统计 -->
+        <div id="battleResults">
+            <div class="results-title">🏆 LEVEL COMPLETE!</div>
+            
+            <div class="results-section">
+                <h3>📊 Level Statistics</h3>
+                <div class="results-row">
+                    <span class="results-label">Level:</span>
+                    <span class="results-value" id="resultLevel">1</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Time Taken:</span>
+                    <span class="results-value" id="resultTime">02:30</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Enemies Defeated:</span>
+                    <span class="results-value" id="resultEnemies">60</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Score Gained:</span>
+                    <span class="results-value" id="resultScore">60000</span>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h3>👥 Player Performance</h3>
+                <div class="results-row">
+                    <span class="results-label">Player 1 Kills:</span>
+                    <span class="results-value player1" id="resultP1Kills">30</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Player 1 Damage:</span>
+                    <span class="results-value player1" id="resultP1Damage">750</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Player 2 Kills:</span>
+                    <span class="results-value player2" id="resultP2Kills">30</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Player 2 Damage:</span>
+                    <span class="results-value player2" id="resultP2Damage">750</span>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h3>🎯 Bonus & Achievements</h3>
+                <div class="results-row">
+                    <span class="results-label">Eagle Survived:</span>
+                    <span class="results-value" id="resultEagleSurvived">✅ YES</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Perfect Clear:</span>
+                    <span class="results-value" id="resultPerfect">❌ NO</span>
+                </div>
+                <div class="results-row">
+                    <span class="results-label">Time Bonus:</span>
+                    <span class="results-value" id="resultTimeBonus">+5000</span>
+                </div>
+            </div>
+            
+            <button class="continue-button" onclick="continueToNextLevel()">
+                🚀 CONTINUE TO NEXT LEVEL
+            </button>
+        </div>
+    </div>
+    
+    <!-- 右侧信息展示区域 -->
+    <div id="infoPanel">
+        <!-- 游戏Dashboard -->
+        <div id="gameDashboard" style="display: none;">
+            <div class="dashboard-section">
+                <div class="dashboard-title">🎮 Game Status</div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Level:</span>
+                    <span class="dashboard-value" id="dashLevel">1</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Progress:</span>
+                    <span class="dashboard-value" id="dashProgress">0/60</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="dashProgressBar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <div class="dashboard-title">👥 Players</div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">P1 Health:</span>
+                    <span class="dashboard-value player1" id="dashP1Health">100/100</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">P1 Lives:</span>
+                    <span class="dashboard-value player1" id="dashP1Lives">3</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">P2 Health:</span>
+                    <span class="dashboard-value player2" id="dashP2Health">100/100</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">P2 Lives:</span>
+                    <span class="dashboard-value player2" id="dashP2Lives">3</span>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <div class="dashboard-title">🦅 Eagle</div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Health:</span>
+                    <span class="dashboard-value" id="dashEagleHealth">3/3</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Shield:</span>
+                    <span class="dashboard-value" id="dashEagleShield">OFF</span>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <div class="dashboard-title">📊 Statistics</div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Score:</span>
+                    <span class="dashboard-value" id="dashScore">0</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Enemies:</span>
+                    <span class="dashboard-value" id="dashEnemies">0</span>
+                </div>
+                <div class="dashboard-row">
+                    <span class="dashboard-label">Time:</span>
+                    <span class="dashboard-value" id="dashTime">00:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系统信息展示区域 - 可折叠 -->
+        <div id="systemInfoContainer">
+            <div id="systemInfoToggle" class="system-toggle">
+                <span class="toggle-icon">🔧</span>
+                <span class="toggle-text">System Info</span>
+                <span class="toggle-arrow">▼</span>
+            </div>
+            <div id="systemInfo" class="collapsed">
+                <div class="info-section">
+                    <div class="info-title">🖥️ System Info</div>
+                    <div class="info-row">
+                        <span class="info-label">Browser:</span>
+                        <span class="info-value" id="browserInfo">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Resolution:</span>
+                        <span class="info-value" id="resolutionInfo">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">FPS:</span>
+                        <span class="info-value" id="fpsInfo">60</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Memory:</span>
+                        <span class="info-value" id="memoryInfo">Loading...</span>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">🎮 Game Engine</div>
+                    <div class="info-row">
+                        <span class="info-label">Version:</span>
+                        <span class="info-value">v0.1</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Canvas:</span>
+                        <span class="info-value">800x600</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Objects:</span>
+                        <span class="info-value" id="objectCount">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Audio:</span>
+                        <span class="info-value" id="audioStatus">Ready</span>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">⚡ Performance</div>
+                    <div class="info-row">
+                        <span class="info-label">Frame Time:</span>
+                        <span class="info-value" id="frameTime">16.7ms</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Update Time:</span>
+                        <span class="info-value" id="updateTime">5.2ms</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Render Time:</span>
+                        <span class="info-value" id="renderTime">8.1ms</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Efficiency:</span>
+                        <span class="info-value" id="efficiency">95%</span>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">🔧 Debug</div>
+                    <div class="info-row">
+                        <span class="info-label">Collisions:</span>
+                        <span class="info-value" id="collisionCount">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Bullets:</span>
+                        <span class="info-value" id="bulletCount">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Particles:</span>
+                        <span class="info-value" id="particleCount">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Events:</span>
+                        <span class="info-value" id="eventCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">🎮 Controllers</div>
+                    <div class="info-row">
+                        <span class="info-label">Player 1:</span>
+                        <span class="info-value" id="gamepad1Status">❌ Disconnected</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Player 2:</span>
+                        <span class="info-value" id="gamepad2Status">❌ Disconnected</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total:</span>
+                        <span class="info-value" id="gamepadTotal">0 Connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+        <!-- 音频控制面板 -->
+        <div class="audio-controls" id="audioControls">
+            <div class="audio-toggle" id="audioToggle">
+                <span>🎵</span>
+                <span>Audio</span>
+                <span id="toggleArrow">▼</span>
+            </div>
+            <div class="audio-panel" id="audioPanel">
+                <div style="margin: 8px 0;">
+                    <button id="toggleSound" class="active">🔊 Sound</button>
+                    <button id="toggleMusic" class="active">🎵 Music</button>
+                </div>
+                <div class="volume-control">
+                    <label>Master:</label>
+                    <input type="range" id="masterVolume" min="0" max="100" value="70">
+                    <span id="masterValue">70%</span>
+                </div>
+                <div class="volume-control">
+                    <label>SFX:</label>
+                    <input type="range" id="soundVolume" min="0" max="100" value="80">
+                    <span id="soundValue">80%</span>
+                </div>
+                <div class="volume-control">
+                    <label>BGM:</label>
+                    <input type="range" id="musicVolume" min="0" max="100" value="40">
+                    <span id="musicValue">40%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="startScreen">
+            <h1>🎮 TANK BATTLE 🎮</h1>
+            <div class="subtitle">
+                <span class="tank-sprite"></span>
+                Cooperative Defense Mission
+                <span class="tank-sprite"></span>
+            </div>
+            
+            <div class="controls">
+                <div>🎯 <strong>Mission:</strong> Protect the <span class="eagle-icon">🦅</span> Eagle!</div>
+                <div style="margin: 15px 0;">
+                    <span class="key">P1</span> WASD + Mouse | 
+                    <span class="key">P2</span> Arrows/Numpad + Space (8-Direction)
+                </div>
+                <div style="margin: 8px 0; color: #FFD700; font-size: 13px;">
+                    🔢 <strong>Numpad Support:</strong> 8↑ 2↓ 4← 6→ | 7↖ 9↗ 1↙ 3↘ | 0/5/Enter: Shoot
+                </div>
+                <div style="margin: 10px 0; color: #00FF88; font-size: 14px;">
+                    🎮 <strong>Xbox Controller Support:</strong><br>
+                    Left Stick: Move | Right Stick: Aim | A/RT: Shoot<br>
+                    Start/Select: Pause | X/Y: Transfer Life
+                </div>
+                <div>
+                    <span class="key">1</span>/<span class="key">2</span> Share Lives | 
+                    8 Levels | Power-ups & Upgrades
+                </div>
+            </div>
+            
+            <button onclick="startGame()">🚀 START MISSION 🚀</button>
+        </div>
+        
+        <div id="ui">
+            <div>Player 1 (Blue)</div>
+            <div class="health-bar">
+                <div id="player1Health" class="health-fill" style="width: 100%;"></div>
+            </div>
+            <div id="player1Ammo">Ammo: ∞</div>
+            <div id="player1Lives" style="color: #FFD700;">Lives: 3</div>
+            
+            <div style="margin-top: 10px;">Player 2 (Green)</div>
+            <div class="health-bar">
+                <div id="player2Health" class="health-fill" style="width: 100%;"></div>
+            </div>
+            <div id="player2Ammo">Ammo: ∞</div>
+            <div id="player2Lives" style="color: #FFD700;">Lives: 3</div>
+            
+            <div style="margin-top: 15px;">Team Score: <span id="score">0</span></div>
+            <div style="margin-top: 5px; color: #FF6666;">Eagle Health: <span id="eagleHealth">3/3</span></div>
+        </div>
+        
+        <div id="controls">
+            <div>🎮 Co-op Defense | P1: WASD+Mouse | P2: Arrows+Space (8-Dir) | Share: 1/2 keys</div>
+        </div>
+    </div>
+
+    <!-- 🎮 游戏设置面板 -->
+    <div id="gameSettings" class="settings-panel">
+        <div class="settings-header">
+            <h2>⚙️ Game Settings</h2>
+            <button id="closeSettings" class="close-btn">✕</button>
+        </div>
+        
+        <div class="settings-content">
+            <!-- 音频设置 -->
+            <div class="setting-section">
+                <h3>🎵 Audio Settings</h3>
+                <div class="setting-item">
+                    <label for="musicToggle">Background Music</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="musicToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="soundToggle">Sound Effects</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="soundToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="musicVolume">Music Volume</label>
+                    <input type="range" id="musicVolume" min="0" max="100" value="70" class="volume-slider">
+                    <span id="musicVolumeValue">70%</span>
+                </div>
+                <div class="setting-item">
+                    <label for="soundVolume">Sound Volume</label>
+                    <input type="range" id="soundVolume" min="0" max="100" value="80" class="volume-slider">
+                    <span id="soundVolumeValue">80%</span>
+                </div>
+            </div>
+            
+            <!-- 控制设置 -->
+            <div class="setting-section">
+                <h3>🎮 Control Settings</h3>
+                <div class="setting-item">
+                    <label for="keyboardControlToggle">Keyboard Controls</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="keyboardControlToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="gamepadControlToggle">Gamepad Controls</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="gamepadControlToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="gamepadVibrationToggle">Gamepad Vibration</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="gamepadVibrationToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="numpadToggle">Numpad Support</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="numpadToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 游戏设置 -->
+            <div class="setting-section">
+                <h3>🎯 Game Settings</h3>
+                <div class="setting-item">
+                    <label for="difficultySelect">Difficulty Level</label>
+                    <select id="difficultySelect" class="setting-select">
+                        <option value="easy">Easy</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="hard">Hard</option>
+                        <option value="expert">Expert</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="autoSaveToggle">Auto Save Progress</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="autoSaveToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 设置按钮 -->
+            <div class="settings-buttons">
+                <button id="resetSettings" class="settings-btn reset-btn">🔄 Reset to Default</button>
+                <button id="saveSettings" class="settings-btn save-btn">💾 Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置按钮 -->
+    <button id="settingsButton" class="floating-settings-btn" title="Game Settings">⚙️</button>
+    
+    <!-- 设置面板遮罩 -->
+    <div id="settingsOverlay" class="settings-overlay"></div>
+
+    <!-- 引入配置文件、音频管理器和游戏手柄管理器 -->
+    <script src="game_config.js"></script>
+    <script src="audio_manager.js"></script>
+    <script src="gamepad_manager.js"></script>
+    <script src="gamepad_latency_optimizer.js"></script>
+    <script src="game_settings_manager.js"></script>
+    <script src="tank_game_fixed.js"></script>
+    <script>
+        // 全局变量
+        let audioManager;
+        // game变量已在tank_game_fixed.js中声明，这里不重复声明
+        
+        // 初始化音频控制
+        function initAudioControls() {
+            audioManager = new AudioManager();
+            
+            // 音频面板折叠/展开
+            document.getElementById('audioToggle').addEventListener('click', function() {
+                const controls = document.getElementById('audioControls');
+                const panel = document.getElementById('audioPanel');
+                const arrow = document.getElementById('toggleArrow');
+                
+                controls.classList.toggle('collapsed');
+                if (controls.classList.contains('collapsed')) {
+                    arrow.textContent = '▶';
+                } else {
+                    arrow.textContent = '▼';
+                }
+            });
+            
+            // 音效开关
+            document.getElementById('toggleSound').addEventListener('click', function() {
+                const enabled = audioManager.toggleSound();
+                this.classList.toggle('active', enabled);
+                this.textContent = enabled ? '🔊 Sound' : '🔇 Sound';
+            });
+            
+            // 音乐开关
+            document.getElementById('toggleMusic').addEventListener('click', function() {
+                const enabled = audioManager.toggleMusic();
+                this.classList.toggle('active', enabled);
+                this.textContent = enabled ? '🎵 Music' : '🎵 Music';
+            });
+            
+            // 音量控制
+            document.getElementById('masterVolume').addEventListener('input', function() {
+                audioManager.setMasterVolume(this.value / 100);
+                document.getElementById('masterValue').textContent = this.value + '%';
+            });
+            
+            document.getElementById('soundVolume').addEventListener('input', function() {
+                audioManager.setSoundVolume(this.value / 100);
+                document.getElementById('soundValue').textContent = this.value + '%';
+            });
+            
+            document.getElementById('musicVolume').addEventListener('input', function() {
+                audioManager.setMusicVolume(this.value / 100);
+                document.getElementById('musicValue').textContent = this.value + '%';
+            });
+        }
+        
+        // 更新UI
+        function updateUI() {
+            if (game && game.gameState === 'playing') {
+                if (game.player1) {
+                    const healthPercent = (game.player1.health / game.player1.maxHealth) * 100;
+                    document.getElementById('player1Health').style.width = healthPercent + '%';
+                }
+                
+                if (game.player2) {
+                    const healthPercent = (game.player2.health / game.player2.maxHealth) * 100;
+                    document.getElementById('player2Health').style.width = healthPercent + '%';
+                }
+                
+                document.getElementById('score').textContent = game.score.teamScore;
+                document.getElementById('player1Lives').textContent = 'Lives: ' + game.player1Lives;
+                document.getElementById('player2Lives').textContent = 'Lives: ' + game.player2Lives;
+                
+                // 更新老鹰健康状态
+                if (game.eagle.destroyed) {
+                    document.getElementById('eagleHealth').textContent = 'DESTROYED';
+                    document.getElementById('eagleHealth').style.color = '#FF0000';
+                } else {
+                    document.getElementById('eagleHealth').textContent = game.eagle.health + '/' + game.eagle.maxHealth;
+                    document.getElementById('eagleHealth').style.color = game.eagle.health > 1 ? '#00FF00' : '#FF6666';
+                }
+                
+                // 更新Dashboard
+                updateDashboard();
+            }
+        }
+        
+        // 更新Dashboard
+        function updateDashboard() {
+            if (!game || game.gameState !== 'playing') return;
+            
+            // 游戏状态
+            document.getElementById('dashLevel').textContent = game.currentLevel;
+            const currentTarget = game.levelTargets[game.currentLevel - 1] || 100;
+            document.getElementById('dashProgress').textContent = `${game.enemiesKilled}/${currentTarget}`;
+            
+            // 进度条
+            const progressPercent = (game.enemiesKilled / currentTarget) * 100;
+            const progressBar = document.getElementById('dashProgressBar');
+            progressBar.style.width = progressPercent + '%';
+            
+            // 进度条颜色
+            progressBar.className = 'progress-fill';
+            if (progressPercent >= 80) {
+                progressBar.classList.add('warning');
+            }
+            if (progressPercent >= 95) {
+                progressBar.classList.add('danger');
+            }
+            
+            // 玩家状态
+            if (game.player1) {
+                document.getElementById('dashP1Health').textContent = `${game.player1.health}/${game.player1.maxHealth}`;
+                document.getElementById('dashP1Lives').textContent = game.player1Lives;
+                
+                // 血量颜色
+                const p1HealthElement = document.getElementById('dashP1Health');
+                p1HealthElement.className = 'dashboard-value player1';
+                if (game.player1.health <= 30) p1HealthElement.classList.add('danger');
+                else if (game.player1.health <= 60) p1HealthElement.classList.add('warning');
+            }
+            
+            if (game.player2) {
+                document.getElementById('dashP2Health').textContent = `${game.player2.health}/${game.player2.maxHealth}`;
+                document.getElementById('dashP2Lives').textContent = game.player2Lives;
+                
+                // 血量颜色
+                const p2HealthElement = document.getElementById('dashP2Health');
+                p2HealthElement.className = 'dashboard-value player2';
+                if (game.player2.health <= 30) p2HealthElement.classList.add('danger');
+                else if (game.player2.health <= 60) p2HealthElement.classList.add('warning');
+            }
+            
+            // 老鹰状态
+            if (game.eagle.destroyed) {
+                document.getElementById('dashEagleHealth').textContent = 'DESTROYED';
+                document.getElementById('dashEagleHealth').className = 'dashboard-value danger';
+            } else {
+                document.getElementById('dashEagleHealth').textContent = `${game.eagle.health}/${game.eagle.maxHealth}`;
+                const eagleHealthElement = document.getElementById('dashEagleHealth');
+                eagleHealthElement.className = 'dashboard-value';
+                if (game.eagle.health <= 1) eagleHealthElement.classList.add('danger');
+                else if (game.eagle.health <= 2) eagleHealthElement.classList.add('warning');
+            }
+            
+            // 护盾状态
+            const shieldElement = document.getElementById('dashEagleShield');
+            if (game.eagleShieldActive) {
+                shieldElement.textContent = `ON (${Math.ceil(game.eagleShieldTime)}s)`;
+                shieldElement.className = 'dashboard-value';
+            } else {
+                shieldElement.textContent = 'OFF';
+                shieldElement.className = 'dashboard-value';
+            }
+            
+            // 统计信息
+            document.getElementById('dashScore').textContent = game.score.teamScore.toLocaleString();
+            document.getElementById('dashEnemies').textContent = game.enemyTanks.length;
+            
+            // 游戏时间
+            if (game.gameStartTime) {
+                const elapsed = (Date.now() - game.gameStartTime) / 1000;
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = Math.floor(elapsed % 60);
+                document.getElementById('dashTime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // 更新系统信息
+        function updateSystemInfo() {
+            // 浏览器信息
+            const browserInfo = navigator.userAgent.split(' ').pop().split('/')[0];
+            document.getElementById('browserInfo').textContent = browserInfo;
+            
+            // 分辨率信息
+            document.getElementById('resolutionInfo').textContent = `${window.innerWidth}x${window.innerHeight}`;
+            
+            // FPS信息 (模拟)
+            const fps = Math.floor(Math.random() * 5) + 58; // 58-62 FPS
+            const fpsElement = document.getElementById('fpsInfo');
+            fpsElement.textContent = fps;
+            fpsElement.className = 'info-value';
+            if (fps < 30) fpsElement.classList.add('error');
+            else if (fps < 50) fpsElement.classList.add('warning');
+            else fpsElement.classList.add('good');
+            
+            // 内存信息
+            if (performance.memory) {
+                const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                document.getElementById('memoryInfo').textContent = `${memoryMB}MB`;
+            } else {
+                document.getElementById('memoryInfo').textContent = 'N/A';
+            }
+            
+            // 游戏对象计数
+            if (game) {
+                const objectCount = (game.enemyTanks?.length || 0) + 
+                                 (game.bullets?.length || 0) + 
+                                 (game.powerUps?.length || 0) + 2; // +2 for players
+                document.getElementById('objectCount').textContent = objectCount;
+                
+                // 调试信息
+                document.getElementById('bulletCount').textContent = game.bullets?.length || 0;
+                document.getElementById('collisionCount').textContent = Math.floor(Math.random() * 10);
+                document.getElementById('particleCount').textContent = Math.floor(Math.random() * 50);
+                document.getElementById('eventCount').textContent = Math.floor(Math.random() * 5);
+            }
+            
+            // 性能信息 (模拟)
+            document.getElementById('frameTime').textContent = `${(16 + Math.random() * 2).toFixed(1)}ms`;
+            document.getElementById('updateTime').textContent = `${(5 + Math.random() * 2).toFixed(1)}ms`;
+            document.getElementById('renderTime').textContent = `${(8 + Math.random() * 3).toFixed(1)}ms`;
+            document.getElementById('efficiency').textContent = `${Math.floor(90 + Math.random() * 10)}%`;
+            
+            // 音频状态
+            const audioElement = document.getElementById('audioStatus');
+            if (window.audioManager) {
+                audioElement.textContent = 'Active';
+                audioElement.className = 'info-value good';
+            } else {
+                audioElement.textContent = 'Inactive';
+                audioElement.className = 'info-value warning';
+            }
+            
+            // 🎮 游戏手柄状态
+            if (window.gamepadManager) {
+                const gamepad1Element = document.getElementById('gamepad1Status');
+                const gamepad2Element = document.getElementById('gamepad2Status');
+                const gamepadTotalElement = document.getElementById('gamepadTotal');
+                
+                // Player 1 手柄状态
+                if (window.gamepadManager.isGamepadConnected(0)) {
+                    const gamepadInfo = window.gamepadManager.getGamepadInfo(0);
+                    gamepad1Element.textContent = '✅ Connected';
+                    gamepad1Element.className = 'info-value good';
+                    gamepad1Element.title = gamepadInfo ? gamepadInfo.id : 'Xbox Controller';
+                } else {
+                    gamepad1Element.textContent = '❌ Disconnected';
+                    gamepad1Element.className = 'info-value error';
+                    gamepad1Element.title = 'No controller detected';
+                }
+                
+                // Player 2 手柄状态
+                if (window.gamepadManager.isGamepadConnected(1)) {
+                    const gamepadInfo = window.gamepadManager.getGamepadInfo(1);
+                    gamepad2Element.textContent = '✅ Connected';
+                    gamepad2Element.className = 'info-value good';
+                    gamepad2Element.title = gamepadInfo ? gamepadInfo.id : 'Xbox Controller';
+                } else {
+                    gamepad2Element.textContent = '❌ Disconnected';
+                    gamepad2Element.className = 'info-value error';
+                    gamepad2Element.title = 'No controller detected';
+                }
+                
+                // 总计
+                const connectedCount = window.gamepadManager.getConnectedGamepadCount();
+                gamepadTotalElement.textContent = `${connectedCount} Connected`;
+                if (connectedCount > 0) {
+                    gamepadTotalElement.className = 'info-value good';
+                } else {
+                    gamepadTotalElement.className = 'info-value warning';
+                }
+            } else {
+                // 游戏手柄管理器未加载
+                document.getElementById('gamepad1Status').textContent = '⚠️ Not Supported';
+                document.getElementById('gamepad2Status').textContent = '⚠️ Not Supported';
+                document.getElementById('gamepadTotal').textContent = 'Manager Not Loaded';
+            }
+        }
+        
+        // 暂停功能
+        let isPaused = false;
+        let pausedMusicType = null; // 记录暂停前播放的音乐类型
+        
+        function togglePause() {
+            if (!game || (game.gameState !== 'playing' && game.gameState !== 'paused')) return;
+            
+            isPaused = !isPaused;
+            const pauseButton = document.getElementById('pauseButton');
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            
+            if (isPaused) {
+                game.gameState = 'paused';
+                pauseButton.textContent = '▶️ RESUME GAME';
+                pauseButton.classList.add('paused');
+                pauseButton.style.display = 'block';
+                pauseOverlay.classList.add('active');
+                
+                // 停止音乐并记录类型
+                if (window.audioManager) {
+                    pausedMusicType = window.audioManager.currentMusic;
+                    window.audioManager.stopMusic();
+                    console.log('Music stopped for pause');
+                }
+            } else {
+                game.gameState = 'playing';
+                pauseButton.classList.remove('paused');
+                pauseButton.style.display = 'none'; // 恢复游戏时隐藏按钮
+                pauseOverlay.classList.remove('active');
+                
+                // 恢复音乐播放
+                if (window.audioManager && pausedMusicType) {
+                    window.audioManager.playMusic(pausedMusicType);
+                    console.log('Music resumed:', pausedMusicType);
+                } else if (window.audioManager) {
+                    // 如果没有记录的音乐类型，播放默认背景音乐
+                    window.audioManager.playMusic('background');
+                    console.log('Default background music resumed');
+                }
+            }
+        }
+        
+        // 显示战斗结果
+        function showBattleResults(levelData) {
+            const resultsDiv = document.getElementById('battleResults');
+            
+            // 更新结果数据
+            document.getElementById('resultLevel').textContent = levelData.level;
+            document.getElementById('resultTime').textContent = levelData.time;
+            document.getElementById('resultEnemies').textContent = levelData.enemiesKilled;
+            document.getElementById('resultScore').textContent = levelData.scoreGained.toLocaleString();
+            
+            document.getElementById('resultP1Kills').textContent = levelData.player1Kills || 0;
+            document.getElementById('resultP1Damage').textContent = levelData.player1Damage || 0;
+            document.getElementById('resultP2Kills').textContent = levelData.player2Kills || 0;
+            document.getElementById('resultP2Damage').textContent = levelData.player2Damage || 0;
+            
+            document.getElementById('resultEagleSurvived').textContent = levelData.eagleSurvived ? '✅ YES' : '❌ NO';
+            document.getElementById('resultPerfect').textContent = levelData.perfectClear ? '✅ YES' : '❌ NO';
+            document.getElementById('resultTimeBonus').textContent = '+' + levelData.timeBonus.toLocaleString();
+            
+            // 显示结果面板
+            resultsDiv.style.display = 'block';
+        }
+        
+        // 继续到下一关
+        function continueToNextLevel() {
+            document.getElementById('battleResults').style.display = 'none';
+            
+            // 继续游戏逻辑
+            if (game) {
+                game.nextLevel(); // 调用实际的关卡切换
+                game.gameState = 'playing';
+            }
+        }
+        
+        // 键盘事件处理
+        document.addEventListener('keydown', function(e) {
+            // ESC键或P键暂停/恢复游戏
+            if (e.code === 'Escape' || e.code === 'KeyP') {
+                e.preventDefault(); // 防止默认行为
+                togglePause();
+            }
+        });
+        
+        // 初始化系统信息折叠功能
+        function initSystemInfoToggle() {
+            const toggle = document.getElementById('systemInfoToggle');
+            const systemInfo = document.getElementById('systemInfo');
+            
+            if (toggle && systemInfo) {
+                toggle.addEventListener('click', function() {
+                    const isCollapsed = systemInfo.classList.contains('collapsed');
+                    
+                    if (isCollapsed) {
+                        // 展开
+                        systemInfo.classList.remove('collapsed');
+                        toggle.classList.add('expanded');
+                    } else {
+                        // 折叠
+                        systemInfo.classList.add('collapsed');
+                        toggle.classList.remove('expanded');
+                    }
+                });
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initAudioControls();
+            
+            // 将音频管理器设为全局变量
+            window.audioManager = audioManager;
+            
+            // 🎮 初始化设置管理器
+            if (typeof GameSettingsManager !== 'undefined') {
+                window.gameSettingsManager = new GameSettingsManager();
+                window.gameSettingsManager.init();
+                console.log('⚙️ Game settings manager initialized');
+            } else {
+                console.warn('⚠️ GameSettingsManager not loaded');
+            }
+            
+            // 初始化系统信息折叠功能
+            initSystemInfoToggle();
+            
+            // 调试：检查startGame函数是否定义
+            console.log('startGame function defined:', typeof startGame);
+            if (typeof startGame !== 'function') {
+                console.error('startGame function is not defined!');
+            }
+            
+            // 用户首次交互时启动音频上下文
+            document.addEventListener('click', function() {
+                if (audioManager) {
+                    audioManager.resumeAudioContext();
+                    // 开始播放背景音乐
+                    audioManager.playMusic('background');
+                }
+            }, { once: true });
+        });
+        
+        // 每帧更新UI
+        setInterval(updateUI, 100);
+        
+        // 错误处理
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.error);
+            alert('Game Error: ' + e.message);
+        });
+        
+        // 确保startGame函数在最后定义，覆盖任何可能的冲突
+        window.startGame = function() {
+            console.log('startGame called');
+            try {
+                document.getElementById('startScreen').style.display = 'none';
+                
+                // 显示Dashboard和系统信息容器，但不显示暂停按钮
+                document.getElementById('gameDashboard').style.display = 'block';
+                document.getElementById('systemInfoContainer').style.display = 'block';
+                // 暂停按钮保持隐藏，只在按ESC时显示
+                
+                // 初始化游戏
+                game = new Game();
+                
+                // 🚀 初始化延迟优化器
+                if (typeof GamepadLatencyOptimizer !== 'undefined') {
+                    window.latencyOptimizer = new GamepadLatencyOptimizer();
+                    
+                    // 启动高频率轮询
+                    if (window.gamepadManager) {
+                        window.latencyOptimizer.startHighFrequencyPolling(window.gamepadManager);
+                        console.log('🚀 Gamepad latency optimization enabled');
+                    }
+                    
+                    // 显示优化建议
+                    const tips = window.latencyOptimizer.getBluetoothOptimizationTips();
+                    console.log('🎮 Bluetooth optimization tips:', tips);
+                } else {
+                    console.warn('⚠️ GamepadLatencyOptimizer not loaded');
+                }
+                
+                // ⚙️ 确保设置在游戏启动后立即应用
+                if (window.gameSettingsManager) {
+                    window.gameSettingsManager.applySettings();
+                    console.log('⚙️ Settings applied after game start');
+                }
+                game.start();
+                
+                // 记录游戏开始时间
+                game.gameStartTime = Date.now();
+                
+                // 开始播放背景音乐
+                if (window.audioManager) {
+                    window.audioManager.stopMusic('menu');
+                    window.audioManager.playMusic('background');
+                }
+                
+                // 添加暂停按钮事件（虽然按钮隐藏，但保留事件处理）
+                document.getElementById('pauseButton').addEventListener('click', togglePause);
+                
+                // 启动系统信息更新
+                setInterval(updateSystemInfo, 1000); // 每秒更新一次系统信息
+            } catch (error) {
+                console.error('Error in startGame:', error);
+                alert('Error starting game: ' + error.message);
+            }
+        };
+    </script>
+</body>
+</html>
