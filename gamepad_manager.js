@@ -106,6 +106,10 @@ class GamepadManager {
         if (gamepad.axes[this.XBOX_AXES.RT_AXIS] !== undefined) {
             this.buttonStates[gamepadIndex]['RT_AXIS'] = gamepad.axes[this.XBOX_AXES.RT_AXIS] > this.triggerThreshold;
         }
+        
+        // 🎮 更新扳机状态 (用于导弹发射检测)
+        this.buttonStates[gamepadIndex]['trigger_RT'] = this.isTriggerPressed(gamepadIndex, 'RT');
+        this.buttonStates[gamepadIndex]['trigger_LT'] = this.isTriggerPressed(gamepadIndex, 'LT');
     }
     
     // 检查按钮是否按下
@@ -135,6 +139,39 @@ class GamepadManager {
         
         const value = gamepad.axes[axis];
         return Math.abs(value) > this.deadzone ? value : 0;
+    }
+    
+    // 🎮 检查扳机是否按下 (支持RT/LT扳机)
+    isTriggerPressed(gamepadIndex, trigger) {
+        const gamepad = this.gamepads[gamepadIndex];
+        if (!gamepad) return false;
+        
+        let triggerValue = 0;
+        
+        if (trigger === 'RT') {
+            // 右扳机 - 检查轴值和按钮状态
+            triggerValue = gamepad.axes[this.XBOX_AXES.RT_AXIS] || 0;
+            const buttonPressed = gamepad.buttons[this.XBOX_BUTTONS.RT]?.pressed || false;
+            return triggerValue > this.triggerThreshold || buttonPressed;
+        } else if (trigger === 'LT') {
+            // 左扳机 - 检查轴值和按钮状态
+            triggerValue = gamepad.axes[this.XBOX_AXES.LT_AXIS] || 0;
+            const buttonPressed = gamepad.buttons[this.XBOX_BUTTONS.LT]?.pressed || false;
+            return triggerValue > this.triggerThreshold || buttonPressed;
+        }
+        
+        return false;
+    }
+    
+    // 🎮 检查扳机是否刚刚按下 (按下瞬间)
+    isTriggerJustPressed(gamepadIndex, trigger) {
+        if (!this.buttonStates[gamepadIndex] || !this.previousButtonStates[gamepadIndex]) return false;
+        
+        const triggerKey = `trigger_${trigger}`;
+        const current = this.isTriggerPressed(gamepadIndex, trigger);
+        const previous = this.previousButtonStates[gamepadIndex][triggerKey] || false;
+        
+        return current && !previous;
     }
     
     // 获取左摇杆值 (移动控制)
@@ -311,7 +348,7 @@ class GamepadManager {
             transferLife: this.isButtonJustPressed(gamepadIndex, this.XBOX_BUTTONS.X) ||
                          this.isButtonJustPressed(gamepadIndex, this.XBOX_BUTTONS.Y),
             
-            // 🚀 B类辅助武器 - 跟踪导弹发射 (B按钮)
+            // 🚀 跟踪导弹发射 (B按钮直接触发)
             launchMissiles: this.isButtonJustPressed(gamepadIndex, this.XBOX_BUTTONS.B),
             
             // 原始手柄对象 (用于高级控制)

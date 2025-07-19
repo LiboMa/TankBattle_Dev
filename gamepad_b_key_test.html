@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 手柄B键测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .test-section {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #FFD700;
+        }
+        
+        .status {
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #FF6600, #FF8800);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(45deg, #FF8800, #FFAA00);
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .log {
+            background: #000;
+            color: #00FF00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        
+        .success { color: #00FF00; }
+        .error { color: #FF4444; }
+        .warning { color: #FFAA00; }
+        .info { color: #00AAFF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 手柄B键导弹发射测试</h1>
+        
+        <div class="test-section">
+            <h3>🔍 手柄连接状态</h3>
+            <div id="connectionStatus" class="status">检测中...</div>
+            <div class="controls">
+                <button class="btn" onclick="checkGamepads()">🔄 刷新检测</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🅱️ B键测试</h3>
+            <div id="bKeyStatus" class="status">等待按键...</div>
+            <div id="rtTriggerStatus" class="status">等待扳机...</div>
+            <div id="launchMissileStatus" class="status">导弹发射状态: 待命</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 实时日志</h3>
+            <div id="testLog" class="log"></div>
+            <div class="controls">
+                <button class="btn" onclick="clearLog()">🗑️ 清空日志</button>
+                <button class="btn" onclick="startTest()">🚀 开始测试</button>
+                <button class="btn" onclick="stopTest()">⏹️ 停止测试</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 测试说明</h3>
+            <ul>
+                <li>连接Xbox手柄到电脑</li>
+                <li>按下手柄上的B按钮</li>
+                <li>按下手柄上的RT扳机</li>
+                <li>观察日志中的响应</li>
+                <li>确认导弹发射状态变化</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="gamepad_manager.js"></script>
+    <script>
+        let gamepadManager = null;
+        let testInterval = null;
+        let logCount = 0;
+
+        // 初始化
+        function init() {
+            try {
+                gamepadManager = new GamepadManager();
+                log('✅ GamepadManager 初始化成功', 'success');
+                checkGamepads();
+                startTest();
+            } catch (error) {
+                log('❌ GamepadManager 初始化失败: ' + error.message, 'error');
+            }
+        }
+
+        // 检查手柄连接
+        function checkGamepads() {
+            if (!gamepadManager) {
+                log('❌ GamepadManager 未初始化', 'error');
+                return;
+            }
+
+            gamepadManager.update();
+            const connectedCount = gamepadManager.getConnectedGamepadCount();
+            
+            const statusDiv = document.getElementById('connectionStatus');
+            if (connectedCount > 0) {
+                statusDiv.innerHTML = `✅ 已连接 ${connectedCount} 个手柄`;
+                statusDiv.style.background = 'rgba(0,200,0,0.2)';
+                
+                // 显示手柄详情
+                for (let i = 0; i < 4; i++) {
+                    if (gamepadManager.isGamepadConnected(i)) {
+                        const info = gamepadManager.getGamepadInfo(i);
+                        log(`🎮 手柄 ${i}: ${info.id}`, 'info');
+                    }
+                }
+            } else {
+                statusDiv.innerHTML = '❌ 未检测到手柄';
+                statusDiv.style.background = 'rgba(200,0,0,0.2)';
+            }
+        }
+
+        // 开始测试
+        function startTest() {
+            if (testInterval) {
+                clearInterval(testInterval);
+            }
+
+            testInterval = setInterval(() => {
+                if (!gamepadManager) return;
+
+                gamepadManager.update();
+                
+                // 测试Player 1 (手柄0)
+                testPlayerInput(1);
+                
+                // 测试Player 2 (手柄1) 
+                testPlayerInput(2);
+                
+            }, 100); // 10Hz更新频率
+
+            log('🚀 开始实时测试...', 'info');
+        }
+
+        // 停止测试
+        function stopTest() {
+            if (testInterval) {
+                clearInterval(testInterval);
+                testInterval = null;
+                log('⏹️ 测试已停止', 'warning');
+            }
+        }
+
+        // 测试玩家输入
+        function testPlayerInput(playerIndex) {
+            try {
+                const input = gamepadManager.getPlayerInput(playerIndex);
+                if (!input) return;
+
+                const gamepadIndex = playerIndex - 1;
+                
+                // 检查B键
+                const bPressed = gamepadManager.isButtonPressed(gamepadIndex, gamepadManager.XBOX_BUTTONS.B);
+                const bJustPressed = gamepadManager.isButtonJustPressed(gamepadIndex, gamepadManager.XBOX_BUTTONS.B);
+                
+                // 检查RT扳机
+                const rtPressed = gamepadManager.isTriggerPressed(gamepadIndex, 'RT');
+                const rtJustPressed = gamepadManager.isTriggerJustPressed(gamepadIndex, 'RT');
+                
+                // 检查导弹发射
+                const launchMissiles = input.launchMissiles;
+
+                // 更新状态显示
+                updateStatus('bKeyStatus', `B键: ${bPressed ? '🔴 按下' : '⚪ 未按下'} ${bJustPressed ? '⚡ 刚按下' : ''}`);
+                updateStatus('rtTriggerStatus', `RT扳机: ${rtPressed ? '🔴 按下' : '⚪ 未按下'} ${rtJustPressed ? '⚡ 刚按下' : ''}`);
+                updateStatus('launchMissileStatus', `导弹发射: ${launchMissiles ? '🚀 触发!' : '⏸️ 待命'}`);
+
+                // 记录按键事件
+                if (bJustPressed) {
+                    log(`🅱️ Player ${playerIndex} B键按下!`, 'success');
+                }
+                if (rtJustPressed) {
+                    log(`🎯 Player ${playerIndex} RT扳机按下!`, 'success');
+                }
+                if (launchMissiles) {
+                    log(`🚀 Player ${playerIndex} 导弹发射触发! (B:${bPressed} RT:${rtPressed})`, 'success');
+                }
+
+            } catch (error) {
+                log(`❌ Player ${playerIndex} 输入测试错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 更新状态显示
+        function updateStatus(elementId, text) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = text;
+            }
+        }
+
+        // 记录日志
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            logCount++;
+            if (logCount > 100) {
+                // 保持日志数量在合理范围
+                logDiv.removeChild(logDiv.firstChild);
+                logCount--;
+            }
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '';
+            logCount = 0;
+            log('📝 日志已清空', 'info');
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            stopTest();
+        });
+    </script>
+</body>
+</html>

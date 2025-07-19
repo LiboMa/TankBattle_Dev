@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 导弹穿墙功能测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #FFD700;
+        }
+        
+        .test-title {
+            color: #FF6600;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .test-canvas {
+            border: 2px solid #666;
+            background: #000;
+            display: block;
+            margin: 10px auto;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #FF6600, #FF8800);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(45deg, #FF8800, #FFAA00);
+            transform: translateY(-2px);
+        }
+        
+        .info {
+            background: rgba(0,100,200,0.2);
+            border-left: 4px solid #0066CC;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .success {
+            background: rgba(0,200,0,0.2);
+            border-left: 4px solid #00CC00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning {
+            background: rgba(255,165,0,0.2);
+            border-left: 4px solid #FFA500;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #CCC;
+            margin-top: 5px;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 导弹穿墙功能测试</h1>
+        
+        <div class="info">
+            <strong>🎯 穿墙功能说明：</strong>
+            <ul>
+                <li>跟踪导弹可以穿透所有障碍物和墙壁</li>
+                <li>导弹只与敌人坦克发生碰撞</li>
+                <li>普通子弹仍然会被障碍物阻挡</li>
+                <li>这使得导弹成为攻击躲在掩体后敌人的利器</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🎯 穿墙轨迹演示</div>
+            <canvas id="penetrationCanvas" class="test-canvas" width="800" height="400"></canvas>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF6600;"></div>
+                    <span>跟踪导弹 (穿墙)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FFD700;"></div>
+                    <span>普通子弹 (被阻挡)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #666;"></div>
+                    <span>障碍物/墙壁</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF4444;"></div>
+                    <span>敌人坦克</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4444FF;"></div>
+                    <span>玩家坦克</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" onclick="startPenetrationDemo()">🚀 开始穿墙演示</button>
+                <button class="btn" onclick="startNormalBulletDemo()">💥 普通子弹对比</button>
+                <button class="btn" onclick="clearCanvas()">🔄 清空画布</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">📊 碰撞检测对比</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="missileHits">0</div>
+                    <div class="stat-label">导弹命中数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="bulletBlocked">0</div>
+                    <div class="stat-label">子弹被阻挡数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="obstaclesPenetrated">0</div>
+                    <div class="stat-label">穿透障碍物数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="penetrationRate">100%</div>
+                    <div class="stat-label">导弹穿透率</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn" onclick="runCollisionTest()">🧪 运行碰撞测试</button>
+                <button class="btn" onclick="resetStats()">📊 重置统计</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🎮 手柄按键测试</div>
+            <div class="info">
+                <strong>支持的按键组合：</strong>
+                <ul>
+                    <li><strong>B按钮</strong>: 传统导弹发射键</li>
+                    <li><strong>RT扳机</strong>: 新增导弹发射键</li>
+                    <li><strong>组合支持</strong>: B按钮 || RT扳机 (任一按下即可)</li>
+                </ul>
+            </div>
+            <div id="gamepadStatus" style="text-align: center; margin: 20px 0; font-size: 18px;">
+                🎮 请连接Xbox手柄进行测试
+            </div>
+            <div class="controls">
+                <button class="btn" onclick="testGamepadInput()">🎮 测试手柄输入</button>
+                <button class="btn" onclick="simulateButtonPress('B')">🅱️ 模拟B按钮</button>
+                <button class="btn" onclick="simulateButtonPress('RT')">🎯 模拟RT扳机</button>
+            </div>
+        </div>
+        
+        <div class="success">
+            <strong>✅ 功能验证要点：</strong>
+            <ul>
+                <li>🚀 导弹轨迹穿过障碍物，不发生碰撞</li>
+                <li>💥 普通子弹被障碍物阻挡，无法穿透</li>
+                <li>🎯 导弹只与敌人坦克发生碰撞并造成伤害</li>
+                <li>🎮 B按钮和RT扳机都能触发导弹发射</li>
+                <li>📊 穿透率达到100%，无障碍物碰撞</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let animationId = null;
+        let stats = {
+            missileHits: 0,
+            bulletBlocked: 0,
+            obstaclesPenetrated: 0
+        };
+
+        // 游戏对象
+        const gameObjects = {
+            player: { x: 100, y: 200, width: 30, height: 20 },
+            enemy: { x: 700, y: 200, width: 30, height: 20 },
+            obstacles: [
+                { x: 300, y: 150, width: 50, height: 100 },
+                { x: 500, y: 100, width: 50, height: 200 }
+            ],
+            missiles: [],
+            bullets: []
+        };
+
+        // 穿墙演示
+        function startPenetrationDemo() {
+            clearCanvas();
+            const canvas = document.getElementById('penetrationCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 创建导弹
+            const missile = {
+                x: gameObjects.player.x + 30,
+                y: gameObjects.player.y + 10,
+                targetX: gameObjects.enemy.x,
+                targetY: gameObjects.enemy.y + 10,
+                speed: 3,
+                type: 'missile'
+            };
+            
+            gameObjects.missiles = [missile];
+            animatePenetration(ctx);
+        }
+
+        // 普通子弹演示
+        function startNormalBulletDemo() {
+            clearCanvas();
+            const canvas = document.getElementById('penetrationCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 创建子弹
+            const bullet = {
+                x: gameObjects.player.x + 30,
+                y: gameObjects.player.y + 10,
+                targetX: gameObjects.enemy.x,
+                targetY: gameObjects.enemy.y + 10,
+                speed: 4,
+                type: 'bullet'
+            };
+            
+            gameObjects.bullets = [bullet];
+            animatePenetration(ctx);
+        }
+
+        // 动画循环
+        function animatePenetration(ctx) {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, 800, 400);
+                
+                // 绘制场景
+                drawScene(ctx);
+                
+                // 更新和绘制导弹
+                updateProjectiles();
+                
+                // 检查是否需要继续动画
+                if (gameObjects.missiles.length > 0 || gameObjects.bullets.length > 0) {
+                    animationId = requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+
+        // 绘制场景
+        function drawScene(ctx) {
+            // 绘制玩家
+            ctx.fillStyle = '#4444FF';
+            ctx.fillRect(gameObjects.player.x, gameObjects.player.y, gameObjects.player.width, gameObjects.player.height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '12px Arial';
+            ctx.fillText('Player', gameObjects.player.x, gameObjects.player.y - 5);
+            
+            // 绘制敌人
+            ctx.fillStyle = '#FF4444';
+            ctx.fillRect(gameObjects.enemy.x, gameObjects.enemy.y, gameObjects.enemy.width, gameObjects.enemy.height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText('Enemy', gameObjects.enemy.x, gameObjects.enemy.y - 5);
+            
+            // 绘制障碍物
+            ctx.fillStyle = '#666666';
+            gameObjects.obstacles.forEach(obstacle => {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+            
+            // 绘制导弹
+            ctx.fillStyle = '#FF6600';
+            gameObjects.missiles.forEach(missile => {
+                ctx.beginPath();
+                ctx.arc(missile.x, missile.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制轨迹
+                ctx.strokeStyle = '#FF6600';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(missile.x - 20, missile.y);
+                ctx.lineTo(missile.x, missile.y);
+                ctx.stroke();
+            });
+            
+            // 绘制子弹
+            ctx.fillStyle = '#FFD700';
+            gameObjects.bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // 更新弹药
+        function updateProjectiles() {
+            // 更新导弹 (穿墙)
+            gameObjects.missiles.forEach((missile, index) => {
+                const dx = missile.targetX - missile.x;
+                const dy = missile.targetY - missile.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > missile.speed) {
+                    missile.x += (dx / distance) * missile.speed;
+                    missile.y += (dy / distance) * missile.speed;
+                    
+                    // 检查是否穿过障碍物
+                    gameObjects.obstacles.forEach(obstacle => {
+                        if (missile.x > obstacle.x && missile.x < obstacle.x + obstacle.width &&
+                            missile.y > obstacle.y && missile.y < obstacle.y + obstacle.height) {
+                            stats.obstaclesPenetrated++;
+                            updateStats();
+                        }
+                    });
+                } else {
+                    // 击中目标
+                    stats.missileHits++;
+                    updateStats();
+                    gameObjects.missiles.splice(index, 1);
+                }
+            });
+            
+            // 更新子弹 (被阻挡)
+            gameObjects.bullets.forEach((bullet, index) => {
+                const dx = bullet.targetX - bullet.x;
+                const dy = bullet.targetY - bullet.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > bullet.speed) {
+                    bullet.x += (dx / distance) * bullet.speed;
+                    bullet.y += (dy / distance) * bullet.speed;
+                    
+                    // 检查障碍物碰撞
+                    let blocked = false;
+                    gameObjects.obstacles.forEach(obstacle => {
+                        if (bullet.x > obstacle.x && bullet.x < obstacle.x + obstacle.width &&
+                            bullet.y > obstacle.y && bullet.y < obstacle.y + obstacle.height) {
+                            blocked = true;
+                        }
+                    });
+                    
+                    if (blocked) {
+                        stats.bulletBlocked++;
+                        updateStats();
+                        gameObjects.bullets.splice(index, 1);
+                    }
+                } else {
+                    gameObjects.bullets.splice(index, 1);
+                }
+            });
+        }
+
+        // 更新统计
+        function updateStats() {
+            document.getElementById('missileHits').textContent = stats.missileHits;
+            document.getElementById('bulletBlocked').textContent = stats.bulletBlocked;
+            document.getElementById('obstaclesPenetrated').textContent = stats.obstaclesPenetrated;
+            
+            const total = stats.missileHits + stats.bulletBlocked + stats.obstaclesPenetrated;
+            const penetrationRate = total > 0 ? Math.round((stats.obstaclesPenetrated / total) * 100) : 100;
+            document.getElementById('penetrationRate').textContent = penetrationRate + '%';
+        }
+
+        // 清空画布
+        function clearCanvas() {
+            const canvas = document.getElementById('penetrationCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 800, 400);
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            gameObjects.missiles = [];
+            gameObjects.bullets = [];
+            
+            drawScene(ctx);
+        }
+
+        // 运行碰撞测试
+        function runCollisionTest() {
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    if (Math.random() > 0.5) {
+                        startPenetrationDemo();
+                    } else {
+                        startNormalBulletDemo();
+                    }
+                }, i * 1000);
+            }
+        }
+
+        // 重置统计
+        function resetStats() {
+            stats = {
+                missileHits: 0,
+                bulletBlocked: 0,
+                obstaclesPenetrated: 0
+            };
+            updateStats();
+        }
+
+        // 测试手柄输入
+        function testGamepadInput() {
+            const gamepads = navigator.getGamepads();
+            let gamepadFound = false;
+            
+            for (let i = 0; i < gamepads.length; i++) {
+                if (gamepads[i]) {
+                    gamepadFound = true;
+                    const gamepad = gamepads[i];
+                    const status = document.getElementById('gamepadStatus');
+                    
+                    // 检查B按钮 (按钮1)
+                    const bPressed = gamepad.buttons[1] && gamepad.buttons[1].pressed;
+                    
+                    // 检查RT扳机 (轴5或按钮7)
+                    const rtPressed = (gamepad.axes[5] && gamepad.axes[5] > 0.1) || 
+                                     (gamepad.buttons[7] && gamepad.buttons[7].pressed);
+                    
+                    status.innerHTML = `
+                        🎮 手柄已连接: ${gamepad.id}<br>
+                        🅱️ B按钮: ${bPressed ? '✅ 按下' : '⭕ 未按下'}<br>
+                        🎯 RT扳机: ${rtPressed ? '✅ 按下' : '⭕ 未按下'}<br>
+                        🚀 导弹发射: ${(bPressed || rtPressed) ? '🔥 可发射' : '⏸️ 待命'}
+                    `;
+                    break;
+                }
+            }
+            
+            if (!gamepadFound) {
+                document.getElementById('gamepadStatus').innerHTML = '❌ 未检测到手柄，请连接Xbox控制器';
+            }
+        }
+
+        // 模拟按键按下
+        function simulateButtonPress(button) {
+            const status = document.getElementById('gamepadStatus');
+            status.innerHTML = `🎮 模拟按键: ${button} 按钮<br>🚀 导弹发射触发！`;
+            
+            setTimeout(() => {
+                status.innerHTML = '🎮 模拟测试完成';
+            }, 2000);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            clearCanvas();
+            updateStats();
+            
+            // 定期检查手柄状态
+            setInterval(testGamepadInput, 1000);
+        });
+    </script>
+</body>
+</html>

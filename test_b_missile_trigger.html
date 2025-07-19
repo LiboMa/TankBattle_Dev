@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B键导弹触发测试</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #111; color: #0f0; }
+        .result { padding: 10px; margin: 5px 0; background: #222; }
+        .success { background: #040; }
+        .fail { background: #400; }
+    </style>
+</head>
+<body>
+    <h1>🚀 B键导弹发射触发测试</h1>
+    <div id="results"></div>
+
+    <script src="game_config.js"></script>
+    <script src="gamepad_manager.js"></script>
+    <script>
+        // 模拟玩家对象
+        class MockPlayer {
+            constructor() {
+                this.isPlayer = true;
+                this.strayMissiles = 10;
+                this.maxStrayMissiles = 10;
+                this.lastMissileLaunch = 1.0;
+                this.missileCooldown = 0.5;
+                this.playerIndex = 1;
+                this.x = 100;
+                this.y = 100;
+            }
+            
+            launchStrayMissiles(enemies) {
+                if (this.strayMissiles <= 0) return [];
+                if (this.lastMissileLaunch < this.missileCooldown) return [];
+                
+                this.strayMissiles--;
+                this.lastMissileLaunch = 0;
+                
+                log(`🚀 导弹发射成功! 剩余: ${this.strayMissiles}`, 'success');
+                return [{ id: Date.now(), type: 'missile' }];
+            }
+        }
+
+        let gamepadManager = null;
+        let mockPlayer = null;
+        let testResults = [];
+
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            document.getElementById('results').appendChild(div);
+            console.log(msg);
+        }
+
+        function init() {
+            log('🔧 初始化测试环境...');
+            
+            try {
+                gamepadManager = new GamepadManager();
+                mockPlayer = new MockPlayer();
+                log('✅ 初始化完成');
+                startTest();
+            } catch (error) {
+                log(`❌ 初始化失败: ${error.message}`, 'fail');
+            }
+        }
+
+        function startTest() {
+            log('🎮 开始B键导弹触发测试 - 请按B键...');
+            
+            let lastLaunchState = false;
+            
+            setInterval(() => {
+                if (!gamepadManager) return;
+                
+                gamepadManager.update();
+                
+                // 获取Player 1输入
+                const input = gamepadManager.getPlayerInput(1);
+                if (input) {
+                    // 检查导弹发射触发
+                    if (input.launchMissiles && !lastLaunchState) {
+                        log('🎯 B键触发检测到!', 'success');
+                        
+                        // 模拟游戏中的导弹发射逻辑
+                        const missiles = mockPlayer.launchStrayMissiles([]);
+                        if (missiles && missiles.length > 0) {
+                            log('✅ 导弹发射成功触发!', 'success');
+                        } else {
+                            log('❌ 导弹发射失败', 'fail');
+                        }
+                    }
+                    lastLaunchState = input.launchMissiles;
+                }
+            }, 50);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

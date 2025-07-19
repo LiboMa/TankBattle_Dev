@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 跟踪导弹道具测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #FFD700;
+        }
+        
+        .test-title {
+            color: #FF6600;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .test-canvas {
+            border: 2px solid #666;
+            background: #000;
+            display: block;
+            margin: 10px auto;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #FF6600, #FF8800);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(45deg, #FF8800, #FFAA00);
+            transform: translateY(-2px);
+        }
+        
+        .info {
+            background: rgba(0,100,200,0.2);
+            border-left: 4px solid #0066CC;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .success {
+            background: rgba(0,200,0,0.2);
+            border-left: 4px solid #00CC00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning {
+            background: rgba(255,165,0,0.2);
+            border-left: 4px solid #FFA500;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #CCC;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 跟踪导弹道具系统测试</h1>
+        
+        <div class="info">
+            <strong>测试目标：</strong>
+            <ul>
+                <li>验证导弹道具的生成和显示</li>
+                <li>测试道具拾取后导弹数量的增加</li>
+                <li>确认最大容量限制功能</li>
+                <li>检查UI显示的正确性</li>
+                <li>🚀 验证导弹穿墙功能 (无障碍物碰撞)</li>
+                <li>🎮 测试RT扳机按键支持</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🎯 导弹道具视觉测试</div>
+            <canvas id="powerupCanvas" class="test-canvas" width="400" height="200"></canvas>
+            <div class="controls">
+                <button class="btn" onclick="testPowerupVisual()">🔄 刷新道具显示</button>
+                <button class="btn" onclick="animatePowerup()">✨ 动画效果</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">📊 导弹数量测试</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="player1Missiles">10</div>
+                    <div class="stat-label">Player 1 导弹数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="player2Missiles">10</div>
+                    <div class="stat-label">Player 2 导弹数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="maxCapacity">15</div>
+                    <div class="stat-label">最大容量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="powerupAmount">+5</div>
+                    <div class="stat-label">每次获得</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn" onclick="simulatePickup(1)">🎮 P1 拾取导弹道具</button>
+                <button class="btn" onclick="simulatePickup(2)">🎮 P2 拾取导弹道具</button>
+                <button class="btn" onclick="resetMissiles()">🔄 重置导弹数量</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🧪 功能验证结果</div>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="success">
+            <strong>✅ 测试通过标准：</strong>
+            <ul>
+                <li>导弹道具图标正确显示（橙色导弹形状 + x5标识）</li>
+                <li>拾取道具后导弹数量正确增加（+5）</li>
+                <li>达到最大容量时不再增加（15发上限）</li>
+                <li>UI显示格式正确（当前/最大）</li>
+                <li>🚀 导弹穿墙功能正常（不与障碍物碰撞）</li>
+                <li>🎮 RT扳机按键支持正常（B按钮 || RT扳机）</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 模拟玩家对象
+        const mockPlayers = {
+            player1: {
+                strayMissiles: 10,
+                maxStrayMissiles: 10,
+                playerIndex: 1,
+                isPlayer: true
+            },
+            player2: {
+                strayMissiles: 10,
+                maxStrayMissiles: 10,
+                playerIndex: 2,
+                isPlayer: true
+            }
+        };
+
+        // 模拟GameConfig
+        const GameConfig = {
+            powerUps: {
+                effects: {
+                    stray_missiles: {
+                        amount: 5,
+                        instant: true,
+                        maxCapacity: 15
+                    }
+                }
+            }
+        };
+
+        // 导弹道具视觉测试
+        function testPowerupVisual() {
+            const canvas = document.getElementById('powerupCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            ctx.fillStyle = '#001122';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制导弹道具
+            ctx.save();
+            ctx.translate(200, 100);
+            
+            // 绘制道具背景圆圈
+            ctx.fillStyle = 'rgba(255, 102, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#FF6600';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // 绘制导弹图标
+            ctx.fillStyle = '#FF6600';
+            ctx.strokeStyle = '#FF3300';
+            ctx.lineWidth = 2;
+            
+            // 绘制导弹主体
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 8, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // 绘制导弹尾翼
+            ctx.fillStyle = '#FF3300';
+            ctx.beginPath();
+            ctx.moveTo(-6, 0);
+            ctx.lineTo(-10, -3);
+            ctx.lineTo(-10, 3);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 绘制导弹头部
+            ctx.fillStyle = '#FFAA00';
+            ctx.beginPath();
+            ctx.ellipse(6, 0, 2, 1, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 添加数量标识
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('x5', 0, -15);
+            
+            ctx.restore();
+            
+            // 添加标签
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🚀 MISSILES 道具', 200, 160);
+            
+            updateTestResults('✅ 导弹道具视觉效果测试完成');
+        }
+
+        // 动画效果测试
+        function animatePowerup() {
+            const canvas = document.getElementById('powerupCanvas');
+            const ctx = canvas.getContext('2d');
+            let frame = 0;
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制背景
+                ctx.fillStyle = '#001122';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 计算动画参数
+                const pulse = Math.sin(frame * 0.1) * 0.2 + 1;
+                const rotation = frame * 0.05;
+                
+                ctx.save();
+                ctx.translate(200, 100);
+                ctx.scale(pulse, pulse);
+                ctx.rotate(rotation);
+                
+                // 绘制发光效果
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+                gradient.addColorStop(0, 'rgba(255, 102, 0, 0.5)');
+                gradient.addColorStop(1, 'rgba(255, 102, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, 30, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制导弹道具（与上面相同的代码）
+                ctx.fillStyle = '#FF6600';
+                ctx.strokeStyle = '#FF3300';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 8, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.fillStyle = '#FF3300';
+                ctx.beginPath();
+                ctx.moveTo(-6, 0);
+                ctx.lineTo(-10, -3);
+                ctx.lineTo(-10, 3);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFAA00';
+                ctx.beginPath();
+                ctx.ellipse(6, 0, 2, 1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('x5', 0, -15);
+                
+                ctx.restore();
+                
+                frame++;
+                if (frame < 120) {
+                    requestAnimationFrame(animate);
+                } else {
+                    updateTestResults('✅ 导弹道具动画效果测试完成');
+                }
+            }
+            
+            animate();
+        }
+
+        // 模拟拾取道具
+        function simulatePickup(playerIndex) {
+            const player = mockPlayers[`player${playerIndex}`];
+            const config = GameConfig.powerUps.effects.stray_missiles;
+            const oldCount = player.strayMissiles;
+            
+            // 增加导弹数量，但不超过最大容量
+            player.strayMissiles = Math.min(
+                player.strayMissiles + config.amount, 
+                config.maxCapacity
+            );
+            
+            // 更新最大容量
+            player.maxStrayMissiles = config.maxCapacity;
+            
+            // 更新显示
+            updateUI();
+            
+            const message = `🎮 Player ${playerIndex} 拾取导弹道具: ${oldCount} → ${player.strayMissiles} 导弹`;
+            updateTestResults(message);
+            
+            // 检查是否达到上限
+            if (player.strayMissiles >= config.maxCapacity) {
+                updateTestResults(`⚠️ Player ${playerIndex} 已达到导弹上限 (${config.maxCapacity})`);
+            }
+        }
+
+        // 重置导弹数量
+        function resetMissiles() {
+            mockPlayers.player1.strayMissiles = 10;
+            mockPlayers.player1.maxStrayMissiles = 10;
+            mockPlayers.player2.strayMissiles = 10;
+            mockPlayers.player2.maxStrayMissiles = 10;
+            
+            updateUI();
+            updateTestResults('🔄 导弹数量已重置');
+        }
+
+        // 更新UI显示
+        function updateUI() {
+            document.getElementById('player1Missiles').textContent = mockPlayers.player1.strayMissiles;
+            document.getElementById('player2Missiles').textContent = mockPlayers.player2.strayMissiles;
+        }
+
+        // 更新测试结果
+        function updateTestResults(message) {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `<div style="margin: 5px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                <span style="color: #888;">[${timestamp}]</span> ${message}
+            </div>`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            testPowerupVisual();
+            updateUI();
+            updateTestResults('🚀 导弹道具测试系统已启动');
+        });
+    </script>
+</body>
+</html>

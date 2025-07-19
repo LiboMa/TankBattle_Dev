@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B键导弹发射测试</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #222; color: #fff; }
+        .status { padding: 10px; margin: 10px 0; background: #333; border-radius: 5px; }
+        .success { background: #060; }
+        .error { background: #600; }
+    </style>
+</head>
+<body>
+    <h1>🚀 B键导弹发射测试</h1>
+    <div id="status" class="status">初始化中...</div>
+    <div id="log" style="height: 300px; overflow-y: auto; background: #000; padding: 10px; margin: 10px 0;"></div>
+
+    <script src="gamepad_manager.js"></script>
+    <script>
+        let gamepadManager = null;
+        let lastMissileState = false;
+
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+
+        function updateStatus(msg, isSuccess = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = msg;
+            statusDiv.className = isSuccess ? 'status success' : 'status';
+        }
+
+        function init() {
+            try {
+                gamepadManager = new GamepadManager();
+                log('✅ GamepadManager 初始化成功');
+                updateStatus('等待手柄连接...');
+                startTest();
+            } catch (error) {
+                log('❌ 初始化失败: ' + error.message);
+                updateStatus('初始化失败', false);
+            }
+        }
+
+        function startTest() {
+            setInterval(() => {
+                if (!gamepadManager) return;
+
+                gamepadManager.update();
+                
+                // 检查Player 1
+                const input = gamepadManager.getPlayerInput(1);
+                if (input) {
+                    if (input.launchMissiles && !lastMissileState) {
+                        log('🚀 Player 1 B键触发导弹发射!');
+                        updateStatus('B键导弹发射成功!', true);
+                    }
+                    lastMissileState = input.launchMissiles;
+                    
+                    // 显示当前状态
+                    const gamepad = navigator.getGamepads()[0];
+                    if (gamepad) {
+                        const bPressed = gamepad.buttons[1] && gamepad.buttons[1].pressed;
+                        updateStatus(`手柄连接 | B键: ${bPressed ? '按下' : '未按下'} | 导弹: ${input.launchMissiles ? '触发' : '待命'}`);
+                    }
+                } else {
+                    updateStatus('等待手柄连接...');
+                }
+            }, 50);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

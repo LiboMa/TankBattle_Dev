@@ -1904,6 +1904,14 @@
             // 将音频管理器设为全局变量
             window.audioManager = audioManager;
             
+            // 🎮 初始化游戏手柄管理器
+            if (typeof GamepadManager !== 'undefined') {
+                window.gamepadManager = new GamepadManager();
+                console.log('🎮 GamepadManager initialized');
+            } else {
+                console.warn('⚠️ GamepadManager not loaded');
+            }
+            
             // 🎮 初始化设置管理器
             if (typeof GameSettingsManager !== 'undefined') {
                 window.gameSettingsManager = new GameSettingsManager();

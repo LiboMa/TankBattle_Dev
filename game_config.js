@@ -92,7 +92,7 @@ const GameConfig = {
 
     // === 道具效果配置 ===
     powerUps: {
-        types: ['health', 'speed', 'explosive', 'invincible', 'shotgun', 'life', 'thunder', 'eagle_shield', 'chain_bullet', 'mega_shotgun', 'bullet_speed'],
+        types: ['health', 'speed', 'explosive', 'invincible', 'shotgun', 'life', 'thunder', 'eagle_shield', 'chain_bullet', 'mega_shotgun', 'bullet_speed', 'stray_missiles'],
         spawnInterval: 8,        // 道具生成间隔(秒)
         maxActive: 3,            // 最多同时存在的道具数量
 
@@ -147,6 +147,11 @@ const GameConfig = {
             bullet_speed: {
                 speedMultiplier: 1.5,
                 duration: 20
+            },
+            stray_missiles: {
+                amount: 5,           // 每次拾取获得5发导弹
+                instant: true,       // 立即生效
+                maxCapacity: 15      // 最大容量提升到15发
             }
         }
     },

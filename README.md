@@ -22,6 +22,7 @@
 - **左摇杆**: 360度移动控制
 - **右摇杆**: 360度瞄准控制 (炮塔跟随)
 - **A按钮/右扳机**: 射击
+- **B按钮/RT扳机**: 🚀 跟踪导弹发射 (穿墙攻击)
 - **LB/RB肩键**: 特殊射击 (散弹等)
 - **Start/Select**: 暂停游戏
 - **X/Y按钮**: 生命转移
@@ -70,6 +71,7 @@ simpleGame/
 ├── gamepad_test.html           # 🧪 手柄测试页面
 ├── bluetooth_latency_optimizer.html # 🚀 蓝牙延迟优化页面
 ├── numpad_test.html            # 🔢 小键盘测试页面
+├── missile_powerup_test.html   # 🚀 导弹道具测试页面 - 新增！
 ├── maintain-book-markdown.md   # 📚 完整维护手册 - 开发者必读
 ├── README.md                   # 📖 项目说明 - 本文件
 ├── test-runner.html            # 🧪 测试运行器 - 测试套件入口
@@ -84,7 +86,7 @@ simpleGame/
 - **🎮 Xbox手柄支持** - 完整的双手柄支持，震动反馈
 - **🎮 8方向控制** - 玩家2支持精确的8方向移动
 - **🎵 完整音频** - 丰富的音效和背景音乐系统
-- **🎁 11种道具** - 多样化的道具效果和组合
+- **🎁 12种道具** - 多样化的道具效果和组合，包括跟踪导弹补给
 - **⚔️ 8个关卡** - 渐进式难度，基数60敌人每关+30%
 - **🛡️ 队友免疫** - 玩家子弹不会误伤队友
 - **⚙️ 完整设置系统** - 音频、控制、游戏选项全面可配置
@@ -186,7 +188,8 @@ simpleGame/
 2. **单元测试**: 打开 `unit-tests.html`
 3. **集成测试**: 打开 `integration-tests.html`
 4. **手柄测试**: 打开 `gamepad_test.html` (新增)
-5. **代码审查**: 查看 `code-review-report.md`
+5. **导弹道具测试**: 打开 `missile_powerup_test.html` (新增)
+6. **代码审查**: 查看 `code-review-report.md`
 
 ## 🔍 代码质量
 

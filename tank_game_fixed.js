@@ -1236,6 +1236,39 @@ class PowerUp {
                 ctx.textAlign = 'center';
                 ctx.fillText('SPEED', 0, 12);
                 break;
+            case 'stray_missiles':
+                // 🚀 跟踪导弹道具 - 导弹图标
+                ctx.fillStyle = '#FF6600';
+                ctx.strokeStyle = '#FF3300';
+                ctx.lineWidth = 2;
+                
+                // 绘制导弹主体
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 8, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // 绘制导弹尾翼
+                ctx.fillStyle = '#FF3300';
+                ctx.beginPath();
+                ctx.moveTo(-6, 0);
+                ctx.lineTo(-10, -3);
+                ctx.lineTo(-10, 3);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 绘制导弹头部
+                ctx.fillStyle = '#FFAA00';
+                ctx.beginPath();
+                ctx.ellipse(6, 0, 2, 1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 添加数量标识
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '8px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('x5', 0, -12);
+                break;
         }
         
         ctx.restore();
@@ -1272,6 +1305,7 @@ class PowerUp {
             case 'chain_bullet': return 'CHAIN BULLET';
             case 'mega_shotgun': return 'MEGA SHOTGUN';
             case 'bullet_speed': return 'BULLET SPEED';
+            case 'stray_missiles': return 'MISSILES';
             default: return 'POWER';
         }
     }
@@ -1778,7 +1812,7 @@ class Game {
         // 道具系统
         this.powerUpSpawnTimer = 0;
         this.powerUpSpawnInterval = 8; // 每8秒生成一个道具
-        this.powerUpTypes = ['health', 'speed', 'explosive', 'invincible', 'shotgun', 'life', 'thunder', 'eagle_shield', 'chain_bullet', 'mega_shotgun'];
+        this.powerUpTypes = ['health', 'speed', 'explosive', 'invincible', 'shotgun', 'life', 'thunder', 'eagle_shield', 'chain_bullet', 'mega_shotgun', 'stray_missiles'];
         this.maxPowerUps = 3; // 最多同时存在3个道具
         
         // 老鹰护盾系统
@@ -2226,6 +2260,7 @@ class Game {
                 case 'chain_bullet':
                 case 'thunder':
                 case 'bullet_speed':
+                case 'stray_missiles':
                     window.audioManager.playSound('weaponPickup');
                     break;
                 case 'invincible':
@@ -2275,6 +2310,24 @@ class Game {
                 break;
             case 'bullet_speed':
                 player.addBulletSpeedBoost(GameConfig.powerUps.effects.bullet_speed.duration);
+                break;
+            case 'stray_missiles':
+                // 🚀 跟踪导弹道具 - 补充导弹数量
+                if (player.isPlayer && player.hasOwnProperty('strayMissiles')) {
+                    const config = GameConfig.powerUps.effects.stray_missiles;
+                    const oldCount = player.strayMissiles;
+                    
+                    // 增加导弹数量，但不超过最大容量
+                    player.strayMissiles = Math.min(
+                        player.strayMissiles + config.amount, 
+                        config.maxCapacity
+                    );
+                    
+                    // 更新最大容量
+                    player.maxStrayMissiles = config.maxCapacity;
+                    
+                    console.log(`🚀 Player ${player.playerIndex} collected missile powerup! ${oldCount} → ${player.strayMissiles} missiles`);
+                }
                 break;
         }
     }
@@ -2781,9 +2834,9 @@ class Game {
         }
     }
     
-    // 🚀 检查导弹碰撞
+    // 🚀 检查导弹碰撞 - 穿墙版本
     checkMissileCollisions(missile, missileIndex) {
-        // 检查与敌人坦克的碰撞
+        // 🎯 只检查与敌人坦克的碰撞 - 导弹可穿透障碍物和墙壁
         for (let i = this.enemyTanks.length - 1; i >= 0; i--) {
             const enemy = this.enemyTanks[i];
             if (!enemy.alive) continue;
@@ -2821,7 +2874,7 @@ class Game {
                         window.audioManager.playSound('enemyDestroy');
                     }
                     
-                    console.log(`🚀 Missile destroyed enemy! Score: ${this.score.teamScore}`);
+                    console.log(`🚀 Missile penetrated and destroyed enemy! Score: ${this.score.teamScore}`);
                     
                     // 检查关卡完成
                     this.checkLevelComplete();
@@ -2833,26 +2886,9 @@ class Game {
             }
         }
         
-        // 检查与障碍物的碰撞
-        for (const obstacle of this.obstacles) {
-            if (obstacle.destroyed) continue;
-            
-            if (this.checkCollision(missile.getBounds(), obstacle.getBounds())) {
-                // 导弹击中障碍物
-                if (obstacle.destructible) {
-                    obstacle.takeDamage(missile.damage);
-                }
-                
-                // 播放撞击音效
-                if (window.audioManager) {
-                    window.audioManager.playSound('missileHit');
-                }
-                
-                // 移除导弹
-                this.strayMissiles.splice(missileIndex, 1);
-                return;
-            }
-        }
+        // 🚀 导弹穿墙功能 - 不再检查障碍物碰撞
+        // 导弹可以穿透所有障碍物和墙壁，直接攻击敌人
+        console.log(`🎯 Missile ${missile.id || 'unknown'} penetrating obstacles...`);
     }
     
     spawnEnemyTank() {
@@ -3055,19 +3091,12 @@ class Game {
                 console.log('⌨️ Player 1 Q key detected for missile launch');
             }
             
-            // 🎮 游戏手柄B键检测
-            if (window.gamepadManager && 
-                typeof window.gamepadManager.getInput === 'function' && 
-                (!window.gameSettings || window.gameSettings.gamepadEnabled !== false)) {
-                
-                try {
-                    const gamepadInput = window.gamepadManager.getInput(0); // Player 1 = gamepad 0
-                    if (gamepadInput && gamepadInput.launchMissiles) {
-                        player1ShouldLaunchMissiles = true;
-                        console.log('🎮 Player 1 gamepad B button detected for missile launch');
-                    }
-                } catch (error) {
-                    console.warn('Player 1 gamepad input error:', error);
+            // 🎮 手柄B键直接检测
+            if (window.gamepadManager) {
+                const gamepad = navigator.getGamepads()[0];
+                if (gamepad && gamepad.buttons[1] && gamepad.buttons[1].pressed) {
+                    player1ShouldLaunchMissiles = true;
+                    console.log('🚀 Player 1 B键直接触发导弹');
                 }
             }
             
@@ -3104,19 +3133,12 @@ class Game {
                 console.log('🔢 Player 2 Numpad+ detected for missile launch');
             }
             
-            // 🎮 游戏手柄B键检测
-            if (window.gamepadManager && 
-                typeof window.gamepadManager.getInput === 'function' && 
-                (!window.gameSettings || window.gameSettings.gamepadEnabled !== false)) {
-                
-                try {
-                    const gamepadInput = window.gamepadManager.getInput(1); // Player 2 = gamepad 1
-                    if (gamepadInput && gamepadInput.launchMissiles) {
-                        player2ShouldLaunchMissiles = true;
-                        console.log('🎮 Player 2 gamepad B button detected for missile launch');
-                    }
-                } catch (error) {
-                    console.warn('Player 2 gamepad input error:', error);
+            // 🎮 手柄B键直接检测
+            if (window.gamepadManager) {
+                const gamepad = navigator.getGamepads()[1];
+                if (gamepad && gamepad.buttons[1] && gamepad.buttons[1].pressed) {
+                    player2ShouldLaunchMissiles = true;
+                    console.log('🚀 Player 2 B键直接触发导弹');
                 }
             }
             
@@ -3790,11 +3812,11 @@ class Game {
         // 🚀 显示导弹数量和控制说明
         if (this.player1 && this.player1.hasOwnProperty('strayMissiles')) {
             this.ctx.fillStyle = '#FF6600';
-            this.ctx.fillText(`P1 Missiles: ${this.player1.strayMissiles}/10 (Right Click/Q)`, 10, this.height - 160);
+            this.ctx.fillText(`P1 Missiles: ${this.player1.strayMissiles}/${this.player1.maxStrayMissiles} (Right Click/Q/RT)`, 10, this.height - 160);
         }
         if (this.player2 && this.player2.hasOwnProperty('strayMissiles')) {
             this.ctx.fillStyle = '#FF6600';
-            this.ctx.fillText(`P2 Missiles: ${this.player2.strayMissiles}/10 (E/Numpad+)`, 10, this.height - 140);
+            this.ctx.fillText(`P2 Missiles: ${this.player2.strayMissiles}/${this.player2.maxStrayMissiles} (E/Numpad+/RT)`, 10, this.height - 140);
         }
         
         // 显示当前激活的子弹特效
