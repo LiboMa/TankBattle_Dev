@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚔️ 游戏难度设置测试</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+        
+        .difficulty-table {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        th, td {
+            border: 1px solid #666;
+            padding: 8px 12px;
+            text-align: center;
+        }
+        
+        th {
+            background: #333;
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        td {
+            background: #2a2a2a;
+        }
+        
+        .level-header {
+            background: #0066cc !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        
+        .increase-cell {
+            background: #004400 !important;
+            color: #00ff00 !important;
+        }
+        
+        .no-change-cell {
+            background: #444400 !important;
+            color: #ffff00 !important;
+        }
+        
+        .stats-panel {
+            background: #2a2a2a;
+            border: 2px solid #ff6600;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-box {
+            background: #333;
+            border: 1px solid #666;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #ccc;
+            font-size: 12px;
+        }
+        
+        .formula-box {
+            background: #1a1a1a;
+            border: 1px solid #666;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        
+        .highlight {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            background: #333;
+            border-radius: 5px;
+            height: 20px;
+            margin: 5px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ 游戏难度设置测试</h1>
+        
+        <div class="stats-panel">
+            <h3>📊 新难度系统概览</h3>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value highlight">20%</div>
+                    <div class="stat-label">每级递增率</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value highlight">8</div>
+                    <div class="stat-label">总关卡数</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value highlight">隔级</div>
+                    <div class="stat-label">血量/攻速增长</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value highlight">每级</div>
+                    <div class="stat-label">敌人数量增长</div>
+                </div>
+            </div>
+            
+            <div class="formula-box">
+                <h4>🧮 计算公式:</h4>
+                <p><span class="highlight">敌人数量</span>: Level N = Level (N-1) × 1.2</p>
+                <p><span class="highlight">血量/攻速</span>: 仅在奇数关卡 (1,3,5,7) 增加 20%</p>
+                <p><span class="highlight">基础值</span>: Level 1 = 60敌人, 25血量, 2.0秒攻击间隔</p>
+            </div>
+        </div>
+        
+        <div class="difficulty-table">
+            <h3>📋 详细难度配置表</h3>
+            <table id="difficulty-table">
+                <thead>
+                    <tr>
+                        <th>关卡</th>
+                        <th>敌人数量</th>
+                        <th>数量增长</th>
+                        <th>敌人血量</th>
+                        <th>血量变化</th>
+                        <th>攻击间隔(秒)</th>
+                        <th>攻速变化</th>
+                        <th>移动速度</th>
+                        <th>同时敌人数</th>
+                    </tr>
+                </thead>
+                <tbody id="difficulty-tbody">
+                    <!-- 表格内容将由JavaScript生成 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="chart-container">
+            <h3>📈 难度增长趋势图</h3>
+            <div id="charts-container">
+                <!-- 图表将由JavaScript生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="game_config.js"></script>
+    <script>
+        // 新的难度配置数据
+        const difficultyData = [
+            { level: 1, enemies: 60, health: 25, shootInterval: 2.0, speed: 50, maxEnemies: 3 },
+            { level: 2, enemies: 72, health: 25, shootInterval: 2.0, speed: 60, maxEnemies: 4 },
+            { level: 3, enemies: 86, health: 30, shootInterval: 1.67, speed: 70, maxEnemies: 5 },
+            { level: 4, enemies: 103, health: 30, shootInterval: 1.67, speed: 80, maxEnemies: 6 },
+            { level: 5, enemies: 124, health: 36, shootInterval: 1.39, speed: 90, maxEnemies: 7 },
+            { level: 6, enemies: 149, health: 36, shootInterval: 1.39, speed: 100, maxEnemies: 8 },
+            { level: 7, enemies: 179, health: 43, shootInterval: 1.16, speed: 110, maxEnemies: 10 },
+            { level: 8, enemies: 215, health: 43, shootInterval: 1.16, speed: 120, maxEnemies: 12 }
+        ];
+        
+        function generateDifficultyTable() {
+            const tbody = document.getElementById('difficulty-tbody');
+            
+            difficultyData.forEach((data, index) => {
+                const row = document.createElement('tr');
+                
+                // 计算增长率
+                const prevData = index > 0 ? difficultyData[index - 1] : null;
+                const enemyGrowth = prevData ? ((data.enemies - prevData.enemies) / prevData.enemies * 100).toFixed(1) + '%' : '-';
+                const healthChange = prevData ? (data.health === prevData.health ? '不变' : `+${((data.health - prevData.health) / prevData.health * 100).toFixed(1)}%`) : '-';
+                const speedChange = prevData ? (data.shootInterval === prevData.shootInterval ? '不变' : `+${((prevData.shootInterval - data.shootInterval) / prevData.shootInterval * 100).toFixed(1)}%`) : '-';
+                
+                // 判断是否为增长关卡
+                const isHealthIncrease = data.level % 2 === 1 && data.level > 1;
+                const isSpeedIncrease = data.level % 2 === 1 && data.level > 1;
+                
+                row.innerHTML = `
+                    <td class="level-header">Level ${data.level}</td>
+                    <td>${data.enemies}</td>
+                    <td class="increase-cell">${enemyGrowth}</td>
+                    <td>${data.health}</td>
+                    <td class="${isHealthIncrease ? 'increase-cell' : 'no-change-cell'}">${healthChange}</td>
+                    <td>${data.shootInterval}</td>
+                    <td class="${isSpeedIncrease ? 'increase-cell' : 'no-change-cell'}">${speedChange}</td>
+                    <td>${data.speed}</td>
+                    <td>${data.maxEnemies}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function generateCharts() {
+            const container = document.getElementById('charts-container');
+            
+            // 敌人数量趋势
+            const enemyChart = createChart('敌人数量增长', difficultyData.map(d => d.enemies), '#ff6600');
+            container.appendChild(enemyChart);
+            
+            // 血量趋势
+            const healthChart = createChart('敌人血量变化', difficultyData.map(d => d.health), '#00ff00');
+            container.appendChild(healthChart);
+            
+            // 攻击速度趋势 (转换为攻击频率)
+            const attackChart = createChart('攻击频率 (次/秒)', difficultyData.map(d => (1/d.shootInterval).toFixed(2)), '#ffff00');
+            container.appendChild(attackChart);
+        }
+        
+        function createChart(title, data, color) {
+            const chartDiv = document.createElement('div');
+            chartDiv.style.marginBottom = '30px';
+            
+            const titleDiv = document.createElement('h4');
+            titleDiv.textContent = title;
+            titleDiv.style.color = color;
+            chartDiv.appendChild(titleDiv);
+            
+            const maxValue = Math.max(...data.map(d => parseFloat(d)));
+            
+            data.forEach((value, index) => {
+                const barContainer = document.createElement('div');
+                barContainer.style.display = 'flex';
+                barContainer.style.alignItems = 'center';
+                barContainer.style.marginBottom = '5px';
+                
+                const label = document.createElement('span');
+                label.textContent = `L${index + 1}`;
+                label.style.width = '30px';
+                label.style.color = '#ccc';
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                progressBar.style.width = '300px';
+                progressBar.style.marginLeft = '10px';
+                
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-fill';
+                progressFill.style.backgroundColor = color;
+                progressFill.style.width = `${(parseFloat(value) / maxValue) * 100}%`;
+                
+                const progressLabel = document.createElement('div');
+                progressLabel.className = 'progress-label';
+                progressLabel.textContent = value;
+                
+                progressBar.appendChild(progressFill);
+                progressBar.appendChild(progressLabel);
+                
+                barContainer.appendChild(label);
+                barContainer.appendChild(progressBar);
+                
+                chartDiv.appendChild(barContainer);
+            });
+            
+            return chartDiv;
+        }
+        
+        function validateDifficultyProgression() {
+            console.log('🔍 验证难度递增逻辑...');
+            
+            // 验证敌人数量20%递增
+            for (let i = 1; i < difficultyData.length; i++) {
+                const prev = difficultyData[i - 1].enemies;
+                const curr = difficultyData[i].enemies;
+                const expectedIncrease = Math.round(prev * 1.2);
+                const actualIncrease = curr;
+                
+                if (Math.abs(actualIncrease - expectedIncrease) <= 1) { // 允许1的误差
+                    console.log(`✅ Level ${i + 1} 敌人数量递增正确: ${prev} → ${curr} (期望: ${expectedIncrease})`);
+                } else {
+                    console.log(`❌ Level ${i + 1} 敌人数量递增异常: ${prev} → ${curr} (期望: ${expectedIncrease})`);
+                }
+            }
+            
+            // 验证血量和攻速隔级增长
+            for (let i = 0; i < difficultyData.length; i++) {
+                const level = i + 1;
+                const isOddLevel = level % 2 === 1;
+                
+                if (level > 1) {
+                    const prev = difficultyData[i - 1];
+                    const curr = difficultyData[i];
+                    
+                    if (isOddLevel) {
+                        // 奇数关卡应该增长
+                        if (curr.health > prev.health && curr.shootInterval < prev.shootInterval) {
+                            console.log(`✅ Level ${level} 血量和攻速正确增长`);
+                        } else {
+                            console.log(`❌ Level ${level} 血量和攻速应该增长但未增长`);
+                        }
+                    } else {
+                        // 偶数关卡应该保持不变
+                        if (curr.health === prev.health && curr.shootInterval === prev.shootInterval) {
+                            console.log(`✅ Level ${level} 血量和攻速正确保持不变`);
+                        } else {
+                            console.log(`❌ Level ${level} 血量和攻速应该保持不变但发生了变化`);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            generateDifficultyTable();
+            generateCharts();
+            validateDifficultyProgression();
+            
+            console.log('⚔️ 难度设置测试页面加载完成');
+            console.log('📊 新难度系统: 20%阶梯递增，血量/攻速隔级增长');
+        });
+    </script>
+</body>
+</html>

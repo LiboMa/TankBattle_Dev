@@ -1859,8 +1859,8 @@ class Game {
             Array.isArray(GameConfig.difficulty.levels)) {
             this.levelTargets = GameConfig.difficulty.levels.map(level => level.killTarget);
         } else {
-            // 如果配置不可用，使用新的20%递增默认值
-            this.levelTargets = [60, 72, 86, 103, 124, 149, 179, 215];
+            // 如果配置不可用，使用默认值
+            this.levelTargets = [60, 78, 101, 131, 170, 221, 287, 373];
             console.warn('Using default level targets, GameConfig may not be loaded');
         }
 
@@ -2867,10 +2867,6 @@ class Game {
 
                     // 移除敌人
                     this.enemyTanks.splice(i, 1);
-
-                    // 🎯 增加击杀计数 - 关键修复！
-                    this.enemiesKilled++;
-                    this.score.enemiesKilled++;
 
                     // 更新分数和统计
                     const killScore = GameConfig.game.scorePerKill || 500;
