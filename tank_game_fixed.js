@@ -1806,6 +1806,7 @@ class Game {
         this.enemyTanks = [];
         this.bullets = [];
         this.strayMissiles = []; // 🚀 跟踪导弹数组
+        this.particles = []; // 💥 粒子效果数组
         this.obstacles = [];
         this.powerUps = [];
         
@@ -2842,17 +2843,25 @@ class Game {
             if (!enemy.alive) continue;
             
             if (this.checkCollision(missile.getBounds(), enemy.getBounds())) {
+                // 🎯 导弹击中位置
+                const hitX = enemy.x + enemy.width / 2;
+                const hitY = enemy.y + enemy.height / 2;
+                
+                // 💥 创建强化爆炸效果
+                this.createMissileExplosion(hitX, hitY, missile.damage);
+                
+                // 🔊 播放增强音效序列
+                this.playMissileHitSounds(missile.damage);
+                
                 // 导弹击中敌人
                 const damage = missile.damage;
                 enemy.takeDamage(damage);
                 
-                // 播放击中音效
-                if (window.audioManager) {
-                    window.audioManager.playSound('missileHit');
-                }
-                
                 // 如果敌人被摧毁
                 if (!enemy.alive) {
+                    // 💥 敌人摧毁时的额外爆炸效果
+                    this.createEnemyDestroyExplosion(hitX, hitY);
+                    
                     // 移除敌人
                     this.enemyTanks.splice(i, 1);
                     
@@ -2869,12 +2878,16 @@ class Game {
                         this.battleStats.player2Score += killScore;
                     }
                     
-                    // 播放敌人摧毁音效
+                    // 🔊 播放敌人摧毁音效
                     if (window.audioManager) {
                         window.audioManager.playSound('enemyDestroy');
+                        // 额外的爆炸音效
+                        setTimeout(() => {
+                            window.audioManager.playSound('explosion');
+                        }, 100);
                     }
                     
-                    console.log(`🚀 Missile penetrated and destroyed enemy! Score: ${this.score.teamScore}`);
+                    if (window.debugManager) window.debugManager.log(`🚀 Missile penetrated and destroyed enemy! Score: ${this.score.teamScore}`, 'missile');
                     
                     // 检查关卡完成
                     this.checkLevelComplete();
@@ -2887,12 +2900,221 @@ class Game {
         }
         
         // 🚀 导弹穿墙功能 - 不再检查障碍物碰撞
-        // 导弹可以穿透所有障碍物和墙壁，直接攻击敌人
-        console.log(`🎯 Missile ${missile.id || 'unknown'} penetrating obstacles...`);
+        if (window.debugManager) window.debugManager.log(`🎯 Missile ${missile.id || 'unknown'} penetrating obstacles...`, 'missile');
+    }
+    
+    // 💥 创建导弹爆炸效果
+    createMissileExplosion(x, y, damage) {
+        // 创建多层爆炸粒子效果
+        const explosionSize = Math.min(60 + damage * 10, 120); // 根据伤害调整爆炸大小
+        const particleCount = Math.min(15 + damage * 3, 30);
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = 2 + Math.random() * 4;
+            const distance = explosionSize * (0.3 + Math.random() * 0.7);
+            
+            const particle = {
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                maxDistance: distance,
+                currentDistance: 0,
+                life: 1.0,
+                decay: 0.02 + Math.random() * 0.03,
+                size: 3 + Math.random() * 4,
+                color: this.getExplosionColor(i / particleCount),
+                type: 'missile_explosion'
+            };
+            
+            this.particles.push(particle);
+        }
+        
+        // 添加中心爆炸闪光
+        this.particles.push({
+            x: x,
+            y: y,
+            vx: 0,
+            vy: 0,
+            life: 1.0,
+            decay: 0.1,
+            size: explosionSize,
+            color: '#FFFFFF',
+            type: 'missile_flash'
+        });
+        
+        if (window.debugManager) window.debugManager.log(`💥 Missile explosion created at (${Math.round(x)}, ${Math.round(y)}) with ${particleCount} particles`, 'collision');
+    }
+    
+    // 🎨 获取爆炸颜色
+    getExplosionColor(ratio) {
+        // 从橙红色到黄色的渐变
+        if (ratio < 0.3) return '#FF4400'; // 深橙红
+        if (ratio < 0.6) return '#FF6600'; // 橙色
+        if (ratio < 0.8) return '#FF8800'; // 浅橙
+        return '#FFAA00'; // 黄色
+    }
+    
+    // 💥 创建敌人摧毁爆炸效果
+    createEnemyDestroyExplosion(x, y) {
+        // 更大更壮观的摧毁爆炸
+        const explosionSize = 100;
+        const particleCount = 25;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = 3 + Math.random() * 5;
+            const distance = explosionSize * (0.5 + Math.random() * 0.5);
+            
+            const particle = {
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                maxDistance: distance,
+                currentDistance: 0,
+                life: 1.0,
+                decay: 0.015 + Math.random() * 0.025,
+                size: 4 + Math.random() * 6,
+                color: this.getDestroyExplosionColor(i / particleCount),
+                type: 'enemy_destroy'
+            };
+            
+            this.particles.push(particle);
+        }
+        
+        // 添加多个闪光层
+        for (let i = 0; i < 3; i++) {
+            this.particles.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y + (Math.random() - 0.5) * 20,
+                vx: 0,
+                vy: 0,
+                life: 1.0,
+                decay: 0.08 + i * 0.02,
+                size: explosionSize - i * 20,
+                color: i === 0 ? '#FFFFFF' : (i === 1 ? '#FFFF00' : '#FF6600'),
+                type: 'destroy_flash'
+            });
+        }
+        
+        if (window.debugManager) window.debugManager.log(`💥 Enemy destroy explosion created at (${Math.round(x)}, ${Math.round(y)})`, 'collision');
+    }
+    
+    // 🎨 获取摧毁爆炸颜色
+    getDestroyExplosionColor(ratio) {
+        // 从白色到红色的渐变
+        if (ratio < 0.2) return '#FFFFFF'; // 白色
+        if (ratio < 0.4) return '#FFFF00'; // 黄色
+        if (ratio < 0.6) return '#FF8800'; // 橙色
+        if (ratio < 0.8) return '#FF4400'; // 红橙
+        return '#FF0000'; // 红色
+    }
+    
+    // 🔊 播放导弹击中音效序列
+    playMissileHitSounds(damage) {
+        if (!window.audioManager) return;
+        
+        // 主要击中音效
+        window.audioManager.playSound('missileHit');
+        
+        // 根据伤害播放额外音效
+        if (damage >= 3) {
+            // 高伤害时播放额外爆炸音
+            setTimeout(() => {
+                window.audioManager.playSound('explosion');
+            }, 50);
+        }
+        
+        // 添加金属撞击音效
+        setTimeout(() => {
+            window.audioManager.playSound('metalHit');
+        }, 100);
+        
+        if (window.debugManager) window.debugManager.log(`🔊 Missile hit sounds played for damage: ${damage}`, 'audio');
+    }
+    
+    // 💥 更新粒子效果
+    updateParticles(deltaTime) {
+        if (!this.particles || !Array.isArray(this.particles)) {
+            this.particles = [];
+            return;
+        }
+        
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+            
+            // 更新粒子位置
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            // 更新距离（用于爆炸粒子）
+            if (particle.maxDistance) {
+                particle.currentDistance += Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+                
+                // 如果超过最大距离，开始衰减
+                if (particle.currentDistance >= particle.maxDistance) {
+                    particle.decay *= 1.5; // 加速衰减
+                }
+            }
+            
+            // 更新生命值
+            particle.life -= particle.decay;
+            
+            // 移除死亡的粒子
+            if (particle.life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+    
+    // 💥 渲染粒子效果
+    renderParticles(ctx) {
+        if (!this.particles || !Array.isArray(this.particles)) return;
+        
+        for (const particle of this.particles) {
+            if (particle.life <= 0) continue;
+            
+            ctx.save();
+            
+            // 设置透明度
+            ctx.globalAlpha = particle.life;
+            
+            // 根据粒子类型渲染
+            switch (particle.type) {
+                case 'missile_explosion':
+                case 'enemy_destroy':
+                    // 渲染爆炸粒子
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size * particle.life, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'missile_flash':
+                case 'destroy_flash':
+                    // 渲染闪光效果
+                    const gradient = ctx.createRadialGradient(
+                        particle.x, particle.y, 0,
+                        particle.x, particle.y, particle.size * particle.life
+                    );
+                    gradient.addColorStop(0, particle.color);
+                    gradient.addColorStop(0.5, particle.color + '80'); // 50% 透明
+                    gradient.addColorStop(1, particle.color + '00'); // 完全透明
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size * particle.life, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+            }
+            
+            ctx.restore();
+        }
     }
     
     spawnEnemyTank() {
-        if (this.enemyTanks.length >= this.maxEnemyTanks) return;
         
         let x, y;
         let attempts = 0;
@@ -3264,6 +3486,9 @@ class Game {
         
         // 🚀 更新跟踪导弹
         this.updateStrayMissiles(deltaTime);
+        
+        // 💥 更新粒子效果
+        this.updateParticles(deltaTime);
         
         // 检查生命奖励
         this.checkLifeRewards();
@@ -3791,6 +4016,9 @@ class Game {
                 }
             });
         }
+        
+        // 💥 绘制粒子效果 (在UI之前，确保不被UI遮挡)
+        this.renderParticles(this.ctx);
         
         // 绘制UI
         this.ctx.fillStyle = 'white';

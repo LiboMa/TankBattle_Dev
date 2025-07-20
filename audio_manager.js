@@ -51,6 +51,7 @@ class AudioManager {
         // 🚀 导弹音效
         this.sounds.missileLaunch = this.createMissileLaunchSound();
         this.sounds.missileHit = this.createMissileHitSound();
+        this.sounds.metalHit = this.createMetalHitSound();
         
         // 系统音效
         this.sounds.levelComplete = this.createLevelCompleteSound();
@@ -366,6 +367,46 @@ class AudioManager {
             
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + 0.15);
+        };
+    }
+    
+    // 🔨 创建金属撞击音效
+    createMetalHitSound() {
+        return () => {
+            if (!this.audioContext || !this.soundEnabled) return;
+            
+            // 创建金属撞击的清脆音效
+            const oscillator1 = this.audioContext.createOscillator();
+            const oscillator2 = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            const filterNode = this.audioContext.createBiquadFilter();
+            
+            // 高频金属音
+            oscillator1.type = 'square';
+            oscillator1.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+            oscillator1.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.08);
+            
+            // 低频撞击音
+            oscillator2.type = 'sawtooth';
+            oscillator2.frequency.setValueAtTime(300, this.audioContext.currentTime);
+            oscillator2.frequency.exponentialRampToValueAtTime(150, this.audioContext.currentTime + 0.05);
+            
+            // 高通滤波器，突出金属质感
+            filterNode.type = 'highpass';
+            filterNode.frequency.setValueAtTime(400, this.audioContext.currentTime);
+            
+            oscillator1.connect(filterNode);
+            oscillator2.connect(gainNode);
+            filterNode.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(0.4 * this.soundVolume * this.masterVolume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.08);
+            
+            oscillator1.start(this.audioContext.currentTime);
+            oscillator1.stop(this.audioContext.currentTime + 0.08);
+            oscillator2.start(this.audioContext.currentTime);
+            oscillator2.stop(this.audioContext.currentTime + 0.05);
         };
     }
     
