@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 手柄连接状态测试</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+        
+        .gamepad-status {
+            background: #2a2a2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .connected {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .disconnected {
+            border-color: #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-connected {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        
+        .status-disconnected {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+        
+        .gamepad-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+        
+        .button-test {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .button {
+            padding: 10px;
+            background: #444;
+            border: 1px solid #666;
+            border-radius: 5px;
+            text-align: center;
+            transition: all 0.1s;
+        }
+        
+        .button.pressed {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        
+        .debug-info {
+            background: #1a1a1a;
+            border: 1px solid #666;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .refresh-btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            margin: 10px 5px;
+        }
+        
+        .refresh-btn:hover {
+            background: #0088ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 手柄连接状态测试</h1>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="refresh-btn" onclick="refreshGamepads()">🔄 刷新手柄状态</button>
+            <button class="refresh-btn" onclick="clearDebugLog()">🗑️ 清空日志</button>
+        </div>
+        
+        <div id="gamepad-container">
+            <!-- 手柄状态将在这里显示 -->
+        </div>
+        
+        <div class="debug-info">
+            <h3>🔧 调试日志:</h3>
+            <div id="debug-log"></div>
+        </div>
+    </div>
+
+    <script src="gamepad_manager.js"></script>
+    <script>
+        let gamepadManager;
+        let debugLog = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.push(`[${timestamp}] ${message}`);
+            updateDebugLog();
+        }
+        
+        function updateDebugLog() {
+            const logElement = document.getElementById('debug-log');
+            logElement.innerHTML = debugLog.slice(-20).join('<br>'); // 只显示最近20条
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearDebugLog() {
+            debugLog = [];
+            updateDebugLog();
+        }
+        
+        function refreshGamepads() {
+            log('🔄 手动刷新手柄状态');
+            updateGamepadStatus();
+        }
+        
+        function updateGamepadStatus() {
+            const container = document.getElementById('gamepad-container');
+            container.innerHTML = '';
+            
+            // 检查原生API
+            const gamepads = navigator.getGamepads();
+            log(`📊 navigator.getGamepads() 返回 ${gamepads.length} 个位置`);
+            
+            for (let i = 0; i < 4; i++) {
+                const gamepadDiv = document.createElement('div');
+                gamepadDiv.className = 'gamepad-status';
+                
+                const nativeGamepad = gamepads[i];
+                const managerConnected = gamepadManager ? gamepadManager.isGamepadConnected(i) : false;
+                
+                if (nativeGamepad && nativeGamepad.connected) {
+                    gamepadDiv.classList.add('connected');
+                    log(`✅ 手柄 ${i} 已连接: ${nativeGamepad.id}`);
+                } else {
+                    gamepadDiv.classList.add('disconnected');
+                }
+                
+                gamepadDiv.innerHTML = `
+                    <h3>
+                        <span class="status-indicator ${nativeGamepad && nativeGamepad.connected ? 'status-connected' : 'status-disconnected'}"></span>
+                        手柄 ${i + 1} (Player ${i + 1})
+                    </h3>
+                    
+                    <div class="gamepad-info">
+                        <strong>原生API状态:</strong> ${nativeGamepad && nativeGamepad.connected ? '✅ 已连接' : '❌ 未连接'}<br>
+                        <strong>管理器状态:</strong> ${managerConnected ? '✅ 已连接' : '❌ 未连接'}<br>
+                        ${nativeGamepad ? `<strong>设备ID:</strong> ${nativeGamepad.id}<br>` : ''}
+                        ${nativeGamepad ? `<strong>按钮数量:</strong> ${nativeGamepad.buttons.length}<br>` : ''}
+                        ${nativeGamepad ? `<strong>轴数量:</strong> ${nativeGamepad.axes.length}<br>` : ''}
+                    </div>
+                    
+                    ${nativeGamepad && nativeGamepad.connected ? `
+                        <div class="button-test">
+                            <div class="button" id="btn-${i}-A">A</div>
+                            <div class="button" id="btn-${i}-B">B</div>
+                            <div class="button" id="btn-${i}-X">X</div>
+                            <div class="button" id="btn-${i}-Y">Y</div>
+                            <div class="button" id="btn-${i}-LB">LB</div>
+                            <div class="button" id="btn-${i}-RB">RB</div>
+                            <div class="button" id="btn-${i}-LT">LT</div>
+                            <div class="button" id="btn-${i}-RT">RT</div>
+                        </div>
+                        
+                        <div class="gamepad-info">
+                            <strong>左摇杆:</strong> <span id="left-stick-${i}">0, 0</span><br>
+                            <strong>右摇杆:</strong> <span id="right-stick-${i}">0, 0</span>
+                        </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(gamepadDiv);
+            }
+        }
+        
+        function updateButtonStates() {
+            const gamepads = navigator.getGamepads();
+            
+            for (let i = 0; i < 4; i++) {
+                const gamepad = gamepads[i];
+                if (!gamepad || !gamepad.connected) continue;
+                
+                // 更新按钮状态
+                const buttons = ['A', 'B', 'X', 'Y', 'LB', 'RB'];
+                buttons.forEach((btnName, index) => {
+                    const btnElement = document.getElementById(`btn-${i}-${btnName}`);
+                    if (btnElement && gamepad.buttons[index]) {
+                        if (gamepad.buttons[index].pressed) {
+                            btnElement.classList.add('pressed');
+                        } else {
+                            btnElement.classList.remove('pressed');
+                        }
+                    }
+                });
+                
+                // 更新扳机
+                const ltElement = document.getElementById(`btn-${i}-LT`);
+                const rtElement = document.getElementById(`btn-${i}-RT`);
+                
+                if (ltElement && gamepad.axes[4] !== undefined) {
+                    if (gamepad.axes[4] > 0.1) {
+                        ltElement.classList.add('pressed');
+                        ltElement.textContent = `LT (${(gamepad.axes[4] * 100).toFixed(0)}%)`;
+                    } else {
+                        ltElement.classList.remove('pressed');
+                        ltElement.textContent = 'LT';
+                    }
+                }
+                
+                if (rtElement && gamepad.axes[5] !== undefined) {
+                    if (gamepad.axes[5] > 0.1) {
+                        rtElement.classList.add('pressed');
+                        rtElement.textContent = `RT (${(gamepad.axes[5] * 100).toFixed(0)}%)`;
+                    } else {
+                        rtElement.classList.remove('pressed');
+                        rtElement.textContent = 'RT';
+                    }
+                }
+                
+                // 更新摇杆状态
+                const leftStickElement = document.getElementById(`left-stick-${i}`);
+                const rightStickElement = document.getElementById(`right-stick-${i}`);
+                
+                if (leftStickElement && gamepad.axes[0] !== undefined && gamepad.axes[1] !== undefined) {
+                    leftStickElement.textContent = `${gamepad.axes[0].toFixed(2)}, ${gamepad.axes[1].toFixed(2)}`;
+                }
+                
+                if (rightStickElement && gamepad.axes[2] !== undefined && gamepad.axes[3] !== undefined) {
+                    rightStickElement.textContent = `${gamepad.axes[2].toFixed(2)}, ${gamepad.axes[3].toFixed(2)}`;
+                }
+            }
+        }
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            log('🚀 页面加载完成，初始化手柄管理器');
+            
+            try {
+                gamepadManager = new GamepadManager();
+                log('✅ GamepadManager 初始化成功');
+            } catch (error) {
+                log(`❌ GamepadManager 初始化失败: ${error.message}`);
+            }
+            
+            updateGamepadStatus();
+            
+            // 定期更新状态
+            setInterval(() => {
+                if (gamepadManager) {
+                    gamepadManager.update();
+                }
+                updateButtonStates();
+            }, 100);
+            
+            // 每秒更新连接状态
+            setInterval(updateGamepadStatus, 1000);
+        });
+        
+        // 手柄连接事件
+        window.addEventListener('gamepadconnected', (e) => {
+            log(`🎮 手柄连接事件: ${e.gamepad.id} (索引: ${e.gamepad.index})`);
+            setTimeout(updateGamepadStatus, 100);
+        });
+        
+        window.addEventListener('gamepaddisconnected', (e) => {
+            log(`🎮 手柄断开事件: ${e.gamepad.id} (索引: ${e.gamepad.index})`);
+            setTimeout(updateGamepadStatus, 100);
+        });
+    </script>
+</body>
+</html>

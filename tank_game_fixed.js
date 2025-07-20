@@ -4100,6 +4100,11 @@ class Game {
         const deltaTime = (currentTime - this.lastTime) / 1000;
         this.lastTime = currentTime;
         
+        // 🎮 更新手柄状态 - 必须在每帧调用以检测手柄连接状态
+        if (window.gamepadManager) {
+            window.gamepadManager.update();
+        }
+        
         if (deltaTime < 0.1) { // 防止大的时间跳跃
             this.update(deltaTime);
         }
